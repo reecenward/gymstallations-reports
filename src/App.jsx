@@ -180,30 +180,6 @@ function gradeCounts(checklist) {
   return counts;
 }
 
-function placeholderSummary(d) {
-  const counts = gradeCounts(d.checklist);
-  const replacements = Object.entries(d.checklist || {})
-    .filter(([, v]) => v?.grade === "Needs Replacement")
-    .map(([k]) => k);
-  const wear = Object.entries(d.checklist || {})
-    .filter(([, v]) => v?.grade === "Acceptable - Has Wear")
-    .map(([k]) => k);
-  const total = replacements.length + wear.length + counts.Excellent + counts.Good;
-  return `A scheduled preventive maintenance inspection was completed on the ${d.brand || "unit"} ${d.model || ""} (${d.equipmentType || "equipment"}) at ${d.clientName || "the client site"} on ${d.date}. The unit has logged ${d.hoursOnUnit || "N/A"} hours of operation over ${d.ageYears || "N/A"} year(s) of service.\n\nOf ${total} inspection points, ${counts.Excellent} were rated Excellent, ${counts.Good} Good, ${wear.length} Acceptable with wear, and ${replacements.length} flagged as needing replacement.${
-    replacements.length
-      ? ` Items requiring replacement: ${replacements.join(", ")}.`
-      : ""
-  }${
-    wear.length
-      ? ` Items showing wear that should be monitored: ${wear.join(", ")}.`
-      : ""
-  }\n\n${
-    d.recommendations
-      ? `Technician recommendations: ${d.recommendations}`
-      : "Continued routine maintenance is advised per manufacturer schedule to preserve optimal performance and extend equipment lifespan."
-  }`;
-}
-
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 export default function App() {
@@ -211,10 +187,7 @@ export default function App() {
   const [step, setStep] = useState(0);
   const [jobs, setJobs] = useState([]);
   const [draft, setDraft] = useState(makeDraft);
-  const [summary, setSummary] = useState("");
-  const [summaryLoading, setSummaryLoading] = useState(false);
   const [emailState, setEmailState] = useState("idle");
-  const [apiKey, setApiKey] = useState("");
   const [viewingJob, setViewingJob] = useState(null);
   const [toast, setToast] = useState(null);
 
@@ -258,7 +231,6 @@ export default function App() {
 
   const startNew = () => {
     setDraft(makeDraft());
-    setSummary("");
     setEmailState("idle");
     setStep(0);
     setViewingJob(null);
@@ -268,7 +240,6 @@ export default function App() {
   const submitReport = () => {
     const job = {
       ...draft,
-      summary,
       id: Date.now(),
       submittedAt: new Date().toLocaleString(),
     };
@@ -280,61 +251,8 @@ export default function App() {
   const openJob = (job) => {
     setViewingJob(job);
     setDraft(job);
-    setSummary(job.summary || "");
     setEmailState("idle");
     setView("report");
-  };
-
-  const generateSummary = async () => {
-    if (!apiKey.trim()) {
-      setSummary(placeholderSummary(draft));
-      return;
-    }
-    setSummaryLoading(true);
-    setSummary("");
-    try {
-      const items = Object.entries(draft.checklist).map(
-        ([k, v]) => `- ${k}: ${v?.grade || "ungraded"}${v?.notes ? ` (notes: ${v.notes})` : ""}`
-      ).join("\n");
-      const prompt = `Generate a professional gym equipment maintenance report summary (2–3 paragraphs, client-facing) based on:
-Client: ${draft.clientName || "Unknown"} | Site: ${draft.siteAddress || "Unknown"}
-Equipment: ${draft.brand} ${draft.model} ${draft.equipmentType} | Serial: ${draft.serialNumber} | Asset ID: ${draft.assetId}
-Mfg Date: ${draft.manufacturingDate || "N/A"} | Install Date: ${draft.installDate || "N/A"}
-Hours: ${draft.hoursOnUnit} | Age: ${draft.ageYears} years
-Inspection results:
-${items}
-Issues Found: ${draft.issuesFound || "none"}
-Parts Replaced: ${draft.partsReplaced || "none"}
-Recommendations: ${draft.recommendations || "none"}
-Write in a professional tone. Highlight any items needing replacement and recommended follow-up actions.`;
-
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true",
-        },
-        body: JSON.stringify({
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 600,
-          messages: [{ role: "user", content: prompt }],
-        }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.error?.message || `HTTP ${res.status}`);
-      }
-      const data = await res.json();
-      setSummary(data.content[0].text);
-    } catch (e) {
-      showToast(`API Error: ${e.message}`, "error");
-      setSummary(placeholderSummary(draft));
-    } finally {
-      setSummaryLoading(false);
-    }
   };
 
   const sendReport = () => {
@@ -416,18 +334,13 @@ Write in a professional tone. Highlight any items needing replacement and recomm
           updEquipmentType={updEquipmentType}
           updChecklistGrade={updChecklistGrade}
           updChecklistNotes={updChecklistNotes}
-          apiKey={apiKey}
-          setApiKey={setApiKey}
-          summary={summary}
-          summaryLoading={summaryLoading}
-          onGenerate={generateSummary}
           onSubmit={submitReport}
           onBack={() => setView("dashboard")}
         />
       )}
       {view === "report" && (
         <ReportView
-          job={viewingJob || { ...draft, summary }}
+          job={viewingJob || draft}
           emailState={emailState}
           onSend={sendReport}
           onBack={() => setView("dashboard")}
@@ -606,7 +519,6 @@ const STEPS = [
   "Equipment",
   "Inspection",
   "Tech Notes",
-  "AI Summary",
   "Review",
 ];
 
@@ -618,11 +530,6 @@ function FormView({
   updEquipmentType,
   updChecklistGrade,
   updChecklistNotes,
-  apiKey,
-  setApiKey,
-  summary,
-  summaryLoading,
-  onGenerate,
   onSubmit,
   onBack,
 }) {
@@ -707,16 +614,7 @@ function FormView({
           />
         )}
         {step === 4 && <StepTechNotes draft={draft} upd={upd} />}
-        {step === 5 && (
-          <StepAISummary
-            apiKey={apiKey}
-            setApiKey={setApiKey}
-            summary={summary}
-            loading={summaryLoading}
-            onGenerate={onGenerate}
-          />
-        )}
-        {step === 6 && <StepReview draft={draft} summary={summary} />}
+        {step === 5 && <StepReview draft={draft} />}
       </div>
 
       {/* Navigation */}
@@ -1232,95 +1130,7 @@ function StepTechNotes({ draft, upd }) {
   );
 }
 
-function StepAISummary({ apiKey, setApiKey, summary, loading, onGenerate }) {
-  return (
-    <div>
-      <h3 style={{ marginBottom: 8, fontSize: 17, fontWeight: 700, color: NAVY }}>
-        AI-Assisted Summary
-      </h3>
-      <p style={{ color: MID, fontSize: 13, marginBottom: 22, lineHeight: 1.6 }}>
-        Generate a professional client-facing summary using Claude. Enter your
-        Anthropic API key, or leave blank to use a demo summary.
-      </p>
-
-      <Field label="Anthropic API Key (optional)">
-        <input
-          type="password"
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          placeholder="sk-ant-... (leave blank for demo summary)"
-        />
-      </Field>
-
-      <button
-        onClick={onGenerate}
-        disabled={loading}
-        style={{
-          background: loading ? BORDER : ORANGE,
-          color: loading ? MID : "white",
-          border: "none",
-          borderRadius: 8,
-          padding: "11px 26px",
-          fontWeight: 700,
-          marginBottom: 22,
-          fontSize: 14,
-        }}
-      >
-        {loading ? "Generating…" : "✦ Generate Summary"}
-      </button>
-
-      {summary ? (
-        <div
-          style={{
-            background: "#fff7ed",
-            border: "1px solid #fed7aa",
-            borderRadius: 10,
-            padding: "18px 20px",
-          }}
-        >
-          <div
-            style={{
-              fontWeight: 700,
-              color: ORANGE,
-              fontSize: 12,
-              marginBottom: 10,
-              textTransform: "uppercase",
-              letterSpacing: 1,
-            }}
-          >
-            ✦ AI Summary
-          </div>
-          <p
-            style={{
-              fontSize: 14,
-              color: NAVY2,
-              lineHeight: 1.7,
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            {summary}
-          </p>
-        </div>
-      ) : !loading ? (
-        <div
-          style={{
-            background: NA_BG,
-            border: `1px solid ${BORDER}`,
-            borderRadius: 10,
-            padding: "18px",
-            color: MID,
-            fontSize: 13,
-            textAlign: "center",
-          }}
-        >
-          Click "Generate Summary" to create an AI-powered report narrative
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function StepReview({ draft, summary }) {
+function StepReview({ draft }) {
   const counts = gradeCounts(draft.checklist);
 
   return (
@@ -1382,7 +1192,6 @@ function StepReview({ draft, summary }) {
             background: GREY_BG,
             borderRadius: 10,
             padding: 12,
-            marginBottom: 18,
             display: "flex",
             alignItems: "center",
             gap: 12,
@@ -1394,47 +1203,6 @@ function StepReview({ draft, summary }) {
             style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 6 }}
           />
           <div style={{ fontSize: 13, color: MID }}>Serial number photo attached</div>
-        </div>
-      )}
-
-      {summary ? (
-        <div
-          style={{
-            background: "#fff7ed",
-            border: "1px solid #fed7aa",
-            borderRadius: 10,
-            padding: "14px 16px",
-          }}
-        >
-          <div style={{ fontWeight: 700, color: ORANGE, fontSize: 12, marginBottom: 6 }}>
-            ✦ AI SUMMARY READY
-          </div>
-          <p
-            style={{
-              fontSize: 13,
-              color: NAVY2,
-              display: "-webkit-box",
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-              lineHeight: 1.6,
-            }}
-          >
-            {summary}
-          </p>
-        </div>
-      ) : (
-        <div
-          style={{
-            background: "#fef3c7",
-            border: "1px solid #fde68a",
-            borderRadius: 10,
-            padding: "12px 16px",
-            color: "#92400e",
-            fontSize: 13,
-          }}
-        >
-          ⚠ No AI summary generated — a placeholder will be included
         </div>
       )}
     </div>
@@ -2055,51 +1823,6 @@ function ReportView({ job, emailState, onSend, onBack, onPrint }) {
               })}
             </div>
           </div>
-
-          {/* AI Summary */}
-          {job.summary && (
-            <div
-              style={{
-                marginBottom: 28,
-                background: "#fff7ed",
-                border: "1px solid #fed7aa",
-                borderRadius: 12,
-                padding: "20px 24px",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  marginBottom: 12,
-                }}
-              >
-                <span style={{ color: ORANGE }}>✦</span>
-                <span
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: ORANGE,
-                    textTransform: "uppercase",
-                    letterSpacing: 0.6,
-                  }}
-                >
-                  AI-Assisted Summary
-                </span>
-              </div>
-              <p
-                style={{
-                  fontSize: 14,
-                  color: NAVY2,
-                  lineHeight: 1.75,
-                  whiteSpace: "pre-wrap",
-                }}
-              >
-                {job.summary}
-              </p>
-            </div>
-          )}
 
           {/* Tech Notes */}
           {(job.issuesFound || job.partsReplaced || job.recommendations) && (
