@@ -1,0 +1,28 @@
+# /etc/caddy/Caddyfile
+# Replace yourdomain.com with your real domain. Caddy will provision HTTPS
+# automatically as long as DNS A/AAAA records point at this server and ports
+# 80 + 443 are open.
+
+yourdomain.com {
+    encode zstd gzip
+
+    # API → uvicorn. The /api prefix is stripped before forwarding so FastAPI
+    # routes stay as /auth/login, /reports, etc.
+    handle /api/* {
+        uri strip_prefix /api
+        reverse_proxy 127.0.0.1:8000
+    }
+
+    # Static React build, with SPA fallback to index.html for client routes.
+    handle {
+        root * /srv/gymstallations/dist
+        try_files {path} /index.html
+        file_server
+    }
+
+    # Logs (optional, useful)
+    log {
+        output file /var/log/caddy/gymstallations.log
+        format console
+    }
+}

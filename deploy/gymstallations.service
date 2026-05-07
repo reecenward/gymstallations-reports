@@ -1,0 +1,23 @@
+[Unit]
+Description=Gymstallations FastAPI server
+After=network.target
+
+[Service]
+Type=simple
+User=gymstall
+Group=gymstall
+WorkingDirectory=/srv/gymstallations/server
+EnvironmentFile=/srv/gymstallations/server/.env
+ExecStart=/srv/gymstallations/server/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=3
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/gymstallations/server/data
+
+[Install]
+WantedBy=multi-user.target
