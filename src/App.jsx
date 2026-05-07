@@ -2,19 +2,135 @@ import { useState } from "react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const CHECKLIST_ITEMS = [
-  "Belt tension", "Belt alignment", "Belt lubrication", "Running deck condition",
-  "Drive belt inspection", "Motor brush inspection", "Motor temp/operation",
-  "Console function test", "Emergency stop test", "Speed calibration",
-  "Incline calibration", "Roller bearing check", "Frame/weld inspection",
-  "Electrical connections", "Power cord inspection", "Safety key function",
-  "Cooling fan operation", "Heart rate sensor test", "Incline motor test",
-  "Side rail condition", "End caps intact", "Leveling feet",
-  "Serial plate visible", "Overall cleanliness",
+const GRADES = [
+  "Excellent",
+  "Good",
+  "Acceptable - Has Wear",
+  "Needs Replacement",
 ];
 
-const makeInitialChecklist = () =>
-  Object.fromEntries(CHECKLIST_ITEMS.map((k) => [k, "pending"]));
+const GRADE_SHORT = {
+  "Excellent": "Excellent",
+  "Good": "Good",
+  "Acceptable - Has Wear": "Acceptable",
+  "Needs Replacement": "Replace",
+};
+
+const GRADE_COLORS = {
+  "Excellent":             { fg: "#15803d", bg: "#dcfce7", border: "#86efac" },
+  "Good":                  { fg: "#0369a1", bg: "#e0f2fe", border: "#7dd3fc" },
+  "Acceptable - Has Wear": { fg: "#a16207", bg: "#fef3c7", border: "#fde68a" },
+  "Needs Replacement":     { fg: "#b91c1c", bg: "#fee2e2", border: "#fca5a5" },
+};
+
+const EQUIPMENT_TYPES = {
+  Treadmill: [
+    "Frame & structural integrity", "Handrails & console mounts", "Leveling & floor contact",
+    "Running belt alignment", "Running belt condition", "Running belt tension",
+    "Deck condition", "Drive belt condition", "Front & rear rollers",
+    "Motor operation", "Motor compartment cleanliness", "Electronics / control board",
+    "Console display & buttons", "Heart rate sensors", "Speed consistency",
+    "Incline system operation", "Elevation screw condition", "Emergency stop function",
+    "Overall noise & performance",
+  ],
+  Elliptical: [
+    "Frame & structural integrity", "Handlebars (moving & fixed) stability", "Console mast & mounts",
+    "Leveling & floor contact", "Pedal arms & linkage joints", "Pedal condition & grip surface",
+    "Pedal alignment & tracking", "Crank system / axle condition",
+    "Drive system (belt or generator) condition", "Flywheel operation & smoothness",
+    "Resistance system operation (magnetic / generator)", "Resistance level consistency",
+    "Rollers & guide rails (if applicable)", "Rail cleanliness & lubrication",
+    "Bearings condition (arms, crank, rollers)", "Joint play / looseness check",
+    "Motor (if motorized incline or resistance)", "Stride motion smoothness",
+    "Incline system operation (if applicable)", "Console display & buttons",
+    "Electronics / control board", "Heart rate sensors", "Speed consistency",
+    "Emergency stop function", "Overall noise & performance",
+  ],
+  "Stair Climber": [
+    "Frame & structure", "Steps & pedals", "Handrails", "Drive system",
+    "Chain condition", "Chain tension", "Bearings", "Console display",
+    "Buttons & controls", "Heart rate sensors", "Electrical connections",
+    "Safety stop", "Noise & performance",
+  ],
+  "Spin Bike": [
+    "Frame & structure", "Flywheel & resistance", "Pedals & threads",
+    "Handlebars", "Seat & adjustments", "Belt/drive system", "Bearings",
+    "Console / screen", "Connectivity",
+  ],
+  "Upright / Recumbent Bike": [
+    "Frame & structural integrity", "Handlebars condition & stability",
+    "Leveling & floor contact", "Seat post & adjustment mechanism",
+    "Seat condition & padding", "Seat stability (no movement / play)",
+    "Crank arms & pedal threads", "Pedal condition & straps (if applicable)",
+    "Bottom bracket / crank smoothness", "Drive system (belt or chain) condition",
+    "Drive system tension & alignment", "Bearings condition (crank, pedals, flywheel)",
+    "Resistance system operation (magnetic / generator)", "Resistance level consistency",
+    "Motor (if self-powered assist or incline)", "RPM / cadence accuracy",
+    "Speed & resistance consistency", "Console display & buttons",
+    "Electronics / control board", "Heart rate sensors", "Speed consistency",
+    "Emergency stop function", "Overall noise & performance",
+  ],
+  "All Cable Equipment": [
+    "Frame & structure", "Cables", "Pulleys", "Weight stack & guide rods",
+    "Adjustment mechanisms", "Handles & attachments", "Fasteners & bolts",
+    "Overall performance",
+  ],
+  Rower: [
+    "Frame & structural integrity", "Rail condition & straightness",
+    "Leveling & floor contact", "Seat condition & rollers",
+    "Seat travel smoothness (rail glide)", "Footrests & straps condition",
+    "Footrest adjustment mechanism", "Handle condition & grip",
+    "Handle attachment (strap/cord connection)", "Chain / strap condition (wear, rust, fraying)",
+    "Chain alignment & lubrication (if applicable)", "Return mechanism (recoil spring) function",
+    "Drive system operation (chain/cord engagement)", "Flywheel & fan housing condition",
+    "Damper adjustment & function", "Resistance feel consistency",
+    "Stroke smoothness", "Bearings condition (seat, flywheel, rollers)",
+    "Electronics / control board", "Monitor display (PM console)",
+    "Buttons & connectivity (if applicable)",
+  ],
+  Skierg: [
+    "Frame / wall mount / stand stability", "Mounting hardware integrity (wall or floor stand)",
+    "Leveling & alignment", "Handles condition & straps",
+    "Handle return system (cord retraction)", "Drive cords condition (fraying, wear)",
+    "Cord tracking & alignment", "Pulley system condition",
+    "Damper adjustment & function", "Resistance consistency",
+    "Pull stroke smoothness (left/right balance)", "Bearings condition (flywheel, pulleys)",
+    "Electronics / control board", "Monitor display (PM console)", "Buttons & connectivity",
+  ],
+  "Plate Loaded Equipment": [
+    "Frame & structural integrity", "Welds & joints condition",
+    "Leveling & floor contact", "Pivot points & rotation smoothness",
+    "Bearings / bushings condition (pivot joints)", "Range of motion (full travel, no obstruction)",
+    "Weight horns (plate holders) condition", "Weight horn sleeves (wear & damage)",
+    "Cleanliness & lubrication", "Adjustment mechanisms (seat, backrest, start position)",
+    "Adjustment pop pins / locking mechanisms", "Seat & backrest upholstery condition",
+    "Foam integrity & support", "Upholstery tears / wear",
+    "Handles / grips condition (rubber wear, looseness)",
+    "Safety stops / limiters (if applicable)", "Safety lock / catch system (if applicable)",
+    "Fasteners (bolts, nuts) tightness check",
+  ],
+};
+
+const EQUIPMENT_ICONS = {
+  Treadmill: "🏃",
+  Elliptical: "🤸",
+  "Stair Climber": "🪜",
+  "Spin Bike": "🚴",
+  "Upright / Recumbent Bike": "🚲",
+  "All Cable Equipment": "🪢",
+  Rower: "🚣",
+  Skierg: "⛷️",
+  "Plate Loaded Equipment": "🏋️",
+};
+
+const COMMERCIAL_LIFE_YEARS = 10;
+
+const makeInitialChecklist = (type) => {
+  if (!type || !EQUIPMENT_TYPES[type]) return {};
+  return Object.fromEntries(
+    EQUIPMENT_TYPES[type].map((k) => [k, { grade: null, notes: "" }])
+  );
+};
 
 const makeDraft = () => ({
   clientName: "",
@@ -22,13 +138,18 @@ const makeDraft = () => ({
   date: new Date().toISOString().slice(0, 10),
   jobNumber: `GYM-${Math.floor(100000 + Math.random() * 900000)}`,
   technicianName: "",
-  equipmentType: "Treadmill",
+  equipmentType: "",
   brand: "",
   model: "",
   serialNumber: "",
+  assetId: "",
+  location: "",
+  manufacturingDate: "",
+  installDate: "",
   hoursOnUnit: "",
   ageYears: "",
-  checklist: makeInitialChecklist(),
+  serialPhoto: null,
+  checklist: {},
   issuesFound: "",
   partsReplaced: "",
   recommendations: "",
@@ -50,14 +171,32 @@ const NA_BG = "#f1f5f9";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+function gradeCounts(checklist) {
+  const counts = { "Excellent": 0, "Good": 0, "Acceptable - Has Wear": 0, "Needs Replacement": 0, ungraded: 0 };
+  for (const v of Object.values(checklist || {})) {
+    if (v && v.grade && counts[v.grade] !== undefined) counts[v.grade]++;
+    else counts.ungraded++;
+  }
+  return counts;
+}
+
 function placeholderSummary(d) {
-  const fails = Object.entries(d.checklist)
-    .filter(([, v]) => v === "fail")
+  const counts = gradeCounts(d.checklist);
+  const replacements = Object.entries(d.checklist || {})
+    .filter(([, v]) => v?.grade === "Needs Replacement")
     .map(([k]) => k);
-  return `A scheduled maintenance inspection was completed on the ${d.brand || "unit"} ${d.model || ""} (${d.equipmentType}) at ${d.clientName || "the client site"} on ${d.date}. The unit has logged ${d.hoursOnUnit || "N/A"} hours of operation over ${d.ageYears || "N/A"} year(s) of service.\n\n${
-    fails.length
-      ? `The following checklist items were flagged as requiring attention: ${fails.join(", ")}. Immediate corrective action is recommended to prevent further wear or potential safety concerns.`
-      : "All 24 checklist items passed inspection. The unit is in good operational condition with no critical findings."
+  const wear = Object.entries(d.checklist || {})
+    .filter(([, v]) => v?.grade === "Acceptable - Has Wear")
+    .map(([k]) => k);
+  const total = replacements.length + wear.length + counts.Excellent + counts.Good;
+  return `A scheduled preventive maintenance inspection was completed on the ${d.brand || "unit"} ${d.model || ""} (${d.equipmentType || "equipment"}) at ${d.clientName || "the client site"} on ${d.date}. The unit has logged ${d.hoursOnUnit || "N/A"} hours of operation over ${d.ageYears || "N/A"} year(s) of service.\n\nOf ${total} inspection points, ${counts.Excellent} were rated Excellent, ${counts.Good} Good, ${wear.length} Acceptable with wear, and ${replacements.length} flagged as needing replacement.${
+    replacements.length
+      ? ` Items requiring replacement: ${replacements.join(", ")}.`
+      : ""
+  }${
+    wear.length
+      ? ` Items showing wear that should be monitored: ${wear.join(", ")}.`
+      : ""
   }\n\n${
     d.recommendations
       ? `Technician recommendations: ${d.recommendations}`
@@ -74,7 +213,7 @@ export default function App() {
   const [draft, setDraft] = useState(makeDraft);
   const [summary, setSummary] = useState("");
   const [summaryLoading, setSummaryLoading] = useState(false);
-  const [emailState, setEmailState] = useState("idle"); // idle | sending | sent
+  const [emailState, setEmailState] = useState("idle");
   const [apiKey, setApiKey] = useState("");
   const [viewingJob, setViewingJob] = useState(null);
   const [toast, setToast] = useState(null);
@@ -85,8 +224,37 @@ export default function App() {
   };
 
   const upd = (field, val) => setDraft((d) => ({ ...d, [field]: val }));
-  const updChecklist = (item, val) =>
-    setDraft((d) => ({ ...d, checklist: { ...d.checklist, [item]: val } }));
+
+  const updEquipmentType = (type) =>
+    setDraft((d) => ({
+      ...d,
+      equipmentType: type,
+      checklist: makeInitialChecklist(type),
+    }));
+
+  const updChecklistGrade = (item, grade) =>
+    setDraft((d) => ({
+      ...d,
+      checklist: {
+        ...d.checklist,
+        [item]: {
+          ...(d.checklist[item] || { grade: null, notes: "" }),
+          grade: d.checklist[item]?.grade === grade ? null : grade,
+        },
+      },
+    }));
+
+  const updChecklistNotes = (item, notes) =>
+    setDraft((d) => ({
+      ...d,
+      checklist: {
+        ...d.checklist,
+        [item]: {
+          ...(d.checklist[item] || { grade: null, notes: "" }),
+          notes,
+        },
+      },
+    }));
 
   const startNew = () => {
     setDraft(makeDraft());
@@ -125,23 +293,20 @@ export default function App() {
     setSummaryLoading(true);
     setSummary("");
     try {
-      const fails = Object.entries(draft.checklist)
-        .filter(([, v]) => v === "fail")
-        .map(([k]) => k);
-      const passes = Object.entries(draft.checklist)
-        .filter(([, v]) => v === "pass")
-        .map(([k]) => k);
-
+      const items = Object.entries(draft.checklist).map(
+        ([k, v]) => `- ${k}: ${v?.grade || "ungraded"}${v?.notes ? ` (notes: ${v.notes})` : ""}`
+      ).join("\n");
       const prompt = `Generate a professional gym equipment maintenance report summary (2–3 paragraphs, client-facing) based on:
 Client: ${draft.clientName || "Unknown"} | Site: ${draft.siteAddress || "Unknown"}
-Equipment: ${draft.brand} ${draft.model} ${draft.equipmentType} | Serial: ${draft.serialNumber}
+Equipment: ${draft.brand} ${draft.model} ${draft.equipmentType} | Serial: ${draft.serialNumber} | Asset ID: ${draft.assetId}
+Mfg Date: ${draft.manufacturingDate || "N/A"} | Install Date: ${draft.installDate || "N/A"}
 Hours: ${draft.hoursOnUnit} | Age: ${draft.ageYears} years
-PASS items (${passes.length}): ${passes.join(", ") || "none"}
-FAIL items (${fails.length}): ${fails.join(", ") || "none"}
+Inspection results:
+${items}
 Issues Found: ${draft.issuesFound || "none"}
 Parts Replaced: ${draft.partsReplaced || "none"}
 Recommendations: ${draft.recommendations || "none"}
-Write in a professional tone. Highlight any failed items and recommended follow-up actions.`;
+Write in a professional tone. Highlight any items needing replacement and recommended follow-up actions.`;
 
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
@@ -248,7 +413,9 @@ Write in a professional tone. Highlight any failed items and recommended follow-
           setStep={setStep}
           draft={draft}
           upd={upd}
-          updChecklist={updChecklist}
+          updEquipmentType={updEquipmentType}
+          updChecklistGrade={updChecklistGrade}
+          updChecklistNotes={updChecklistNotes}
           apiKey={apiKey}
           setApiKey={setApiKey}
           summary={summary}
@@ -285,9 +452,7 @@ function Dashboard({ jobs, onNew, onView }) {
         }}
       >
         <div>
-          <div
-            style={{ display: "flex", alignItems: "center", gap: 10 }}
-          >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div
               style={{
                 width: 38,
@@ -304,14 +469,12 @@ function Dashboard({ jobs, onNew, onView }) {
                 G
               </span>
             </div>
-            <span
-              style={{ fontSize: 22, fontWeight: 800, color: NAVY, letterSpacing: -0.3 }}
-            >
+            <span style={{ fontSize: 22, fontWeight: 800, color: NAVY, letterSpacing: -0.3 }}>
               Gymstallations
             </span>
           </div>
           <div style={{ color: MID, fontSize: 13, marginTop: 3, paddingLeft: 48 }}>
-            Service &amp; Maintenance Reports
+            Preventive Maintenance Reports
           </div>
         </div>
         <button
@@ -341,14 +504,7 @@ function Dashboard({ jobs, onNew, onView }) {
           }}
         >
           <div style={{ fontSize: 52, marginBottom: 14 }}>📋</div>
-          <div
-            style={{
-              fontSize: 20,
-              fontWeight: 700,
-              color: NAVY,
-              marginBottom: 8,
-            }}
-          >
+          <div style={{ fontSize: 20, fontWeight: 700, color: NAVY, marginBottom: 8 }}>
             No reports yet
           </div>
           <div style={{ color: MID, marginBottom: 28, fontSize: 15 }}>
@@ -371,21 +527,13 @@ function Dashboard({ jobs, onNew, onView }) {
         </div>
       ) : (
         <div>
-          <div
-            style={{
-              fontSize: 13,
-              color: MID,
-              fontWeight: 600,
-              marginBottom: 14,
-            }}
-          >
+          <div style={{ fontSize: 13, color: MID, fontWeight: 600, marginBottom: 14 }}>
             {jobs.length} Report{jobs.length !== 1 ? "s" : ""}
           </div>
           <div style={{ display: "grid", gap: 12 }}>
             {jobs.map((job) => {
-              const fails = Object.values(job.checklist || {}).filter(
-                (v) => v === "fail"
-              ).length;
+              const counts = gradeCounts(job.checklist);
+              const replace = counts["Needs Replacement"];
               return (
                 <div
                   key={job.id}
@@ -401,21 +549,14 @@ function Dashboard({ jobs, onNew, onView }) {
                   }}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontWeight: 700,
-                        fontSize: 15,
-                        color: NAVY,
-                        marginBottom: 3,
-                      }}
-                    >
+                    <div style={{ fontWeight: 700, fontSize: 15, color: NAVY, marginBottom: 3 }}>
                       {job.clientName || "Unnamed Client"}
                     </div>
                     <div style={{ color: MID, fontSize: 13 }}>
-                      {job.brand} {job.model} &middot; {job.date} &middot; Job
-                      #{job.jobNumber}
+                      {EQUIPMENT_ICONS[job.equipmentType] || ""}{" "}
+                      {job.equipmentType} · {job.brand} {job.model} · {job.date} · Job #{job.jobNumber}
                     </div>
-                    {fails > 0 && (
+                    {replace > 0 && (
                       <span
                         style={{
                           display: "inline-block",
@@ -428,7 +569,7 @@ function Dashboard({ jobs, onNew, onView }) {
                           fontWeight: 600,
                         }}
                       >
-                        {fails} item{fails !== 1 ? "s" : ""} failed
+                        {replace} item{replace !== 1 ? "s" : ""} need replacement
                       </span>
                     )}
                   </div>
@@ -460,9 +601,10 @@ function Dashboard({ jobs, onNew, onView }) {
 // ─── Form View ────────────────────────────────────────────────────────────────
 
 const STEPS = [
+  "Equipment Type",
   "Job Info",
   "Equipment",
-  "Checklist",
+  "Inspection",
   "Tech Notes",
   "AI Summary",
   "Review",
@@ -473,7 +615,9 @@ function FormView({
   setStep,
   draft,
   upd,
-  updChecklist,
+  updEquipmentType,
+  updChecklistGrade,
+  updChecklistNotes,
   apiKey,
   setApiKey,
   summary,
@@ -483,20 +627,16 @@ function FormView({
   onBack,
 }) {
   const canNext = () => {
-    if (step === 0) return draft.clientName && draft.technicianName && draft.date;
-    if (step === 1) return draft.brand && draft.model;
+    if (step === 0) return !!draft.equipmentType;
+    if (step === 1) return draft.clientName && draft.technicianName && draft.date;
+    if (step === 2) return draft.brand && draft.model;
     return true;
   };
 
   return (
     <div style={{ maxWidth: 740, margin: "0 auto", padding: "24px 20px" }}>
       <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 24,
-        }}
+        style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}
         className="no-print"
       >
         <button
@@ -521,10 +661,7 @@ function FormView({
       </div>
 
       {/* Step progress */}
-      <div
-        style={{ display: "flex", gap: 6, marginBottom: 28 }}
-        className="no-print"
-      >
+      <div style={{ display: "flex", gap: 6, marginBottom: 28 }} className="no-print">
         {STEPS.map((s, i) => (
           <div key={i} style={{ flex: 1, textAlign: "center" }}>
             <div
@@ -559,13 +696,18 @@ function FormView({
           marginBottom: 20,
         }}
       >
-        {step === 0 && <StepJobInfo draft={draft} upd={upd} />}
-        {step === 1 && <StepEquipment draft={draft} upd={upd} />}
-        {step === 2 && (
-          <StepChecklist draft={draft} updChecklist={updChecklist} />
+        {step === 0 && <StepEquipmentType draft={draft} updEquipmentType={updEquipmentType} />}
+        {step === 1 && <StepJobInfo draft={draft} upd={upd} />}
+        {step === 2 && <StepEquipment draft={draft} upd={upd} />}
+        {step === 3 && (
+          <StepChecklist
+            draft={draft}
+            updChecklistGrade={updChecklistGrade}
+            updChecklistNotes={updChecklistNotes}
+          />
         )}
-        {step === 3 && <StepTechNotes draft={draft} upd={upd} />}
-        {step === 4 && (
+        {step === 4 && <StepTechNotes draft={draft} upd={upd} />}
+        {step === 5 && (
           <StepAISummary
             apiKey={apiKey}
             setApiKey={setApiKey}
@@ -574,14 +716,11 @@ function FormView({
             onGenerate={onGenerate}
           />
         )}
-        {step === 5 && <StepReview draft={draft} summary={summary} />}
+        {step === 6 && <StepReview draft={draft} summary={summary} />}
       </div>
 
       {/* Navigation */}
-      <div
-        style={{ display: "flex", justifyContent: "space-between" }}
-        className="no-print"
-      >
+      <div style={{ display: "flex", justifyContent: "space-between" }} className="no-print">
         <button
           onClick={() => setStep((s) => s - 1)}
           disabled={step === 0}
@@ -597,7 +736,7 @@ function FormView({
         >
           ← Back
         </button>
-        {step < 5 ? (
+        {step < STEPS.length - 1 ? (
           <button
             onClick={() => setStep((s) => s + 1)}
             disabled={!canNext()}
@@ -654,17 +793,63 @@ function Field({ label, required, children }) {
   );
 }
 
+function StepEquipmentType({ draft, updEquipmentType }) {
+  return (
+    <div>
+      <h3 style={{ marginBottom: 8, fontSize: 17, fontWeight: 700, color: NAVY }}>
+        Select Equipment Type
+      </h3>
+      <p style={{ color: MID, fontSize: 13, marginBottom: 20, lineHeight: 1.6 }}>
+        The inspection checklist is generated from the equipment type.
+      </p>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+          gap: 10,
+        }}
+      >
+        {Object.keys(EQUIPMENT_TYPES).map((type) => {
+          const selected = draft.equipmentType === type;
+          const itemCount = EQUIPMENT_TYPES[type].length;
+          return (
+            <button
+              key={type}
+              onClick={() => updEquipmentType(type)}
+              style={{
+                background: selected ? "#fff7ed" : "white",
+                border: `2px solid ${selected ? ORANGE : BORDER}`,
+                borderRadius: 12,
+                padding: "16px 14px",
+                textAlign: "left",
+                cursor: "pointer",
+                transition: "border-color 0.15s, background 0.15s",
+              }}
+            >
+              <div style={{ fontSize: 26, marginBottom: 6 }}>
+                {EQUIPMENT_ICONS[type] || "🏋️"}
+              </div>
+              <div style={{ fontWeight: 700, color: NAVY, fontSize: 14, marginBottom: 2 }}>
+                {type}
+              </div>
+              <div style={{ fontSize: 12, color: MID }}>
+                {itemCount} inspection points
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function StepJobInfo({ draft, upd }) {
   return (
     <div>
-      <h3
-        style={{ marginBottom: 20, fontSize: 17, fontWeight: 700, color: NAVY }}
-      >
+      <h3 style={{ marginBottom: 20, fontSize: 17, fontWeight: 700, color: NAVY }}>
         Job Information
       </h3>
-      <div
-        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}
-      >
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
         <Field label="Client Name" required>
           <input
             value={draft.clientName}
@@ -686,9 +871,7 @@ function StepJobInfo({ draft, upd }) {
           placeholder="Full address"
         />
       </Field>
-      <div
-        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}
-      >
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
         <Field label="Date" required>
           <input
             type="date"
@@ -709,28 +892,38 @@ function StepJobInfo({ draft, upd }) {
 }
 
 function StepEquipment({ draft, upd }) {
+  const onPhotoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => upd("serialPhoto", reader.result);
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div>
-      <h3
-        style={{ marginBottom: 20, fontSize: 17, fontWeight: 700, color: NAVY }}
-      >
+      <h3 style={{ marginBottom: 6, fontSize: 17, fontWeight: 700, color: NAVY }}>
         Equipment Details
       </h3>
       <div
-        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+          background: "#fff7ed",
+          border: "1px solid #fed7aa",
+          color: "#9a3412",
+          borderRadius: 20,
+          padding: "4px 12px",
+          fontSize: 12,
+          fontWeight: 600,
+          marginBottom: 18,
+        }}
       >
-        <Field label="Equipment Type">
-          <select
-            value={draft.equipmentType}
-            onChange={(e) => upd("equipmentType", e.target.value)}
-          >
-            <option>Treadmill</option>
-            <option>Elliptical</option>
-            <option>Stationary Bike</option>
-            <option>Rowing Machine</option>
-            <option>Stair Climber</option>
-          </select>
-        </Field>
+        <span>{EQUIPMENT_ICONS[draft.equipmentType] || "🏋️"}</span>
+        <span>{draft.equipmentType || "No equipment type selected"}</span>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
         <Field label="Brand" required>
           <input
             value={draft.brand}
@@ -752,6 +945,20 @@ function StepEquipment({ draft, upd }) {
             placeholder="e.g. LFT5-2024-..."
           />
         </Field>
+        <Field label="Asset / Internal ID">
+          <input
+            value={draft.assetId}
+            onChange={(e) => upd("assetId", e.target.value)}
+            placeholder="e.g. ASSET-00421"
+          />
+        </Field>
+        <Field label="Location / Floor">
+          <input
+            value={draft.location}
+            onChange={(e) => upd("location", e.target.value)}
+            placeholder="e.g. Cardio Floor 2"
+          />
+        </Field>
         <Field label="Hours on Unit">
           <input
             type="number"
@@ -759,6 +966,20 @@ function StepEquipment({ draft, upd }) {
             onChange={(e) => upd("hoursOnUnit", e.target.value)}
             placeholder="0"
             min="0"
+          />
+        </Field>
+        <Field label="Manufacturing Date">
+          <input
+            type="date"
+            value={draft.manufacturingDate}
+            onChange={(e) => upd("manufacturingDate", e.target.value)}
+          />
+        </Field>
+        <Field label="Install Date">
+          <input
+            type="date"
+            value={draft.installDate}
+            onChange={(e) => upd("installDate", e.target.value)}
           />
         </Field>
         <Field label="Age (Years)">
@@ -771,28 +992,104 @@ function StepEquipment({ draft, upd }) {
           />
         </Field>
       </div>
+
+      <Field label="Serial Number Photo">
+        <div
+          style={{
+            border: `2px dashed ${BORDER}`,
+            borderRadius: 12,
+            padding: "16px",
+            background: GREY_BG,
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+          }}
+        >
+          {draft.serialPhoto ? (
+            <img
+              src={draft.serialPhoto}
+              alt="Serial number"
+              style={{
+                width: 90,
+                height: 90,
+                objectFit: "cover",
+                borderRadius: 8,
+                border: `1px solid ${BORDER}`,
+                flexShrink: 0,
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: 90,
+                height: 90,
+                background: "white",
+                borderRadius: 8,
+                border: `1px solid ${BORDER}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 30,
+                color: MID,
+                flexShrink: 0,
+              }}
+            >
+              📷
+            </div>
+          )}
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, color: MID, marginBottom: 8 }}>
+              Upload a photo of the equipment serial plate.
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <label
+                style={{
+                  background: NAVY,
+                  color: "white",
+                  borderRadius: 8,
+                  padding: "8px 14px",
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: "pointer",
+                  display: "inline-block",
+                }}
+              >
+                {draft.serialPhoto ? "Replace Photo" : "Upload Photo"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={onPhotoChange}
+                  style={{ display: "none" }}
+                />
+              </label>
+              {draft.serialPhoto && (
+                <button
+                  type="button"
+                  onClick={() => upd("serialPhoto", null)}
+                  style={{
+                    background: "white",
+                    border: `1px solid ${BORDER}`,
+                    borderRadius: 8,
+                    padding: "8px 14px",
+                    fontWeight: 600,
+                    fontSize: 13,
+                    color: NAVY2,
+                  }}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </Field>
     </div>
   );
 }
 
-function StepChecklist({ draft, updChecklist }) {
-  const counts = Object.values(draft.checklist).reduce((a, v) => {
-    a[v] = (a[v] || 0) + 1;
-    return a;
-  }, {});
-
-  const statusColor = {
-    pass: PASS_C,
-    fail: FAIL_C,
-    na: MID,
-    pending: "#d97706",
-  };
-  const statusBg = {
-    pass: PASS_BG,
-    fail: FAIL_BG,
-    na: NA_BG,
-    pending: "#fef3c7",
-  };
+function StepChecklist({ draft, updChecklistGrade, updChecklistNotes }) {
+  const items = EQUIPMENT_TYPES[draft.equipmentType] || [];
+  const counts = gradeCounts(draft.checklist);
 
   return (
     <div>
@@ -801,7 +1098,7 @@ function StepChecklist({ draft, updChecklist }) {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: 18,
+          marginBottom: 6,
           flexWrap: "wrap",
           gap: 8,
         }}
@@ -809,71 +1106,90 @@ function StepChecklist({ draft, updChecklist }) {
         <h3 style={{ fontSize: 17, fontWeight: 700, color: NAVY }}>
           Inspection Checklist
         </h3>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {Object.entries(counts).map(([s, n]) => (
-            <span
-              key={s}
-              style={{
-                fontSize: 12,
-                background: statusBg[s],
-                color: statusColor[s],
-                padding: "3px 10px",
-                borderRadius: 20,
-                fontWeight: 600,
-              }}
-            >
-              {n} {s}
-            </span>
-          ))}
+        <div style={{ fontSize: 12, color: MID }}>
+          {EQUIPMENT_ICONS[draft.equipmentType]} {draft.equipmentType} · {items.length} items
         </div>
       </div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+        {GRADES.map((g) => (
+          <span
+            key={g}
+            style={{
+              fontSize: 12,
+              background: GRADE_COLORS[g].bg,
+              color: GRADE_COLORS[g].fg,
+              padding: "3px 10px",
+              borderRadius: 20,
+              fontWeight: 600,
+            }}
+          >
+            {counts[g]} {GRADE_SHORT[g]}
+          </span>
+        ))}
+        {counts.ungraded > 0 && (
+          <span
+            style={{
+              fontSize: 12,
+              background: NA_BG,
+              color: MID,
+              padding: "3px 10px",
+              borderRadius: 20,
+              fontWeight: 600,
+            }}
+          >
+            {counts.ungraded} ungraded
+          </span>
+        )}
+      </div>
 
-      <div style={{ display: "grid", gap: 7 }}>
-        {CHECKLIST_ITEMS.map((item) => {
-          const val = draft.checklist[item];
+      <div style={{ display: "grid", gap: 10 }}>
+        {items.map((item) => {
+          const cell = draft.checklist[item] || { grade: null, notes: "" };
+          const grade = cell.grade;
+          const colors = grade ? GRADE_COLORS[grade] : null;
           return (
             <div
               key={item}
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "9px 13px",
-                borderRadius: 8,
-                border: `1px solid ${val === "pending" ? BORDER : "transparent"}`,
-                background: statusBg[val] || "white",
-                gap: 8,
+                padding: "12px 14px",
+                borderRadius: 10,
+                border: `1px solid ${colors ? colors.border : BORDER}`,
+                background: colors ? colors.bg : "white",
               }}
             >
-              <span style={{ fontSize: 14, color: NAVY2 }}>{item}</span>
-              <div style={{ display: "flex", gap: 5, flexShrink: 0 }}>
-                {["pass", "fail", "na"].map((s) => (
-                  <button
-                    key={s}
-                    onClick={() =>
-                      updChecklist(item, val === s ? "pending" : s)
-                    }
-                    style={{
-                      padding: "4px 11px",
-                      borderRadius: 6,
-                      fontSize: 12,
-                      fontWeight: 700,
-                      border: "none",
-                      background:
-                        val === s
-                          ? s === "pass"
-                            ? PASS_C
-                            : s === "fail"
-                            ? FAIL_C
-                            : MID
-                          : BORDER,
-                      color: val === s ? "white" : MID,
-                    }}
-                  >
-                    {s === "na" ? "N/A" : s.toUpperCase()}
-                  </button>
-                ))}
+              <div style={{ fontSize: 14, color: NAVY2, fontWeight: 600, marginBottom: 8 }}>
+                {item}
               </div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                {GRADES.map((g) => {
+                  const sel = grade === g;
+                  const c = GRADE_COLORS[g];
+                  return (
+                    <button
+                      key={g}
+                      onClick={() => updChecklistGrade(item, g)}
+                      style={{
+                        padding: "6px 12px",
+                        borderRadius: 6,
+                        fontSize: 12,
+                        fontWeight: 700,
+                        border: `1px solid ${sel ? c.fg : BORDER}`,
+                        background: sel ? c.fg : "white",
+                        color: sel ? "white" : c.fg,
+                      }}
+                    >
+                      {GRADE_SHORT[g]}
+                    </button>
+                  );
+                })}
+              </div>
+              <input
+                type="text"
+                value={cell.notes}
+                onChange={(e) => updChecklistNotes(item, e.target.value)}
+                placeholder="Notes (optional)"
+                style={{ fontSize: 13 }}
+              />
             </div>
           );
         })}
@@ -885,9 +1201,7 @@ function StepChecklist({ draft, updChecklist }) {
 function StepTechNotes({ draft, upd }) {
   return (
     <div>
-      <h3
-        style={{ marginBottom: 20, fontSize: 17, fontWeight: 700, color: NAVY }}
-      >
+      <h3 style={{ marginBottom: 20, fontSize: 17, fontWeight: 700, color: NAVY }}>
         Technician Notes
       </h3>
       <Field label="Issues Found">
@@ -921,9 +1235,7 @@ function StepTechNotes({ draft, upd }) {
 function StepAISummary({ apiKey, setApiKey, summary, loading, onGenerate }) {
   return (
     <div>
-      <h3
-        style={{ marginBottom: 8, fontSize: 17, fontWeight: 700, color: NAVY }}
-      >
+      <h3 style={{ marginBottom: 8, fontSize: 17, fontWeight: 700, color: NAVY }}>
         AI-Assisted Summary
       </h3>
       <p style={{ color: MID, fontSize: 13, marginBottom: 22, lineHeight: 1.6 }}>
@@ -1009,21 +1321,11 @@ function StepAISummary({ apiKey, setApiKey, summary, loading, onGenerate }) {
 }
 
 function StepReview({ draft, summary }) {
-  const passes = Object.values(draft.checklist).filter(
-    (v) => v === "pass"
-  ).length;
-  const fails = Object.values(draft.checklist).filter(
-    (v) => v === "fail"
-  ).length;
-  const pending = Object.values(draft.checklist).filter(
-    (v) => v === "pending"
-  ).length;
+  const counts = gradeCounts(draft.checklist);
 
   return (
     <div>
-      <h3
-        style={{ marginBottom: 20, fontSize: 17, fontWeight: 700, color: NAVY }}
-      >
+      <h3 style={{ marginBottom: 20, fontSize: 17, fontWeight: 700, color: NAVY }}>
         Review &amp; Submit
       </h3>
 
@@ -1042,23 +1344,58 @@ function StepReview({ draft, summary }) {
         <ReviewCard label="Technician" value={draft.technicianName} />
         <ReviewCard
           label="Equipment"
-          value={`${draft.brand} ${draft.model}`.trim() || "—"}
+          value={
+            draft.equipmentType
+              ? `${draft.equipmentType} — ${draft.brand} ${draft.model}`.trim()
+              : "—"
+          }
         />
+        <ReviewCard label="Asset ID" value={draft.assetId} />
+        <ReviewCard label="Location" value={draft.location} />
       </div>
 
-      <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
-        <StatBadge count={passes} label="PASSED" color={PASS_C} bg={PASS_BG} borderColor="#86efac" />
-        <StatBadge
-          count={fails}
-          label="FAILED"
-          color={fails > 0 ? FAIL_C : MID}
-          bg={fails > 0 ? FAIL_BG : NA_BG}
-          borderColor={fails > 0 ? "#fca5a5" : BORDER}
-        />
-        {pending > 0 && (
-          <StatBadge count={pending} label="PENDING" color="#d97706" bg="#fef3c7" borderColor="#fde68a" />
+      <div style={{ display: "flex", gap: 10, marginBottom: 18, flexWrap: "wrap" }}>
+        {GRADES.map((g) => (
+          <StatBadge
+            key={g}
+            count={counts[g]}
+            label={GRADE_SHORT[g].toUpperCase()}
+            color={GRADE_COLORS[g].fg}
+            bg={GRADE_COLORS[g].bg}
+            borderColor={GRADE_COLORS[g].border}
+          />
+        ))}
+        {counts.ungraded > 0 && (
+          <StatBadge
+            count={counts.ungraded}
+            label="UNGRADED"
+            color={MID}
+            bg={NA_BG}
+            borderColor={BORDER}
+          />
         )}
       </div>
+
+      {draft.serialPhoto && (
+        <div
+          style={{
+            background: GREY_BG,
+            borderRadius: 10,
+            padding: 12,
+            marginBottom: 18,
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <img
+            src={draft.serialPhoto}
+            alt="Serial"
+            style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 6 }}
+          />
+          <div style={{ fontSize: 13, color: MID }}>Serial number photo attached</div>
+        </div>
+      )}
 
       {summary ? (
         <div
@@ -1069,14 +1406,7 @@ function StepReview({ draft, summary }) {
             padding: "14px 16px",
           }}
         >
-          <div
-            style={{
-              fontWeight: 700,
-              color: ORANGE,
-              fontSize: 12,
-              marginBottom: 6,
-            }}
-          >
+          <div style={{ fontWeight: 700, color: ORANGE, fontSize: 12, marginBottom: 6 }}>
             ✦ AI SUMMARY READY
           </div>
           <p
@@ -1113,13 +1443,7 @@ function StepReview({ draft, summary }) {
 
 function ReviewCard({ label, value }) {
   return (
-    <div
-      style={{
-        background: GREY_BG,
-        borderRadius: 8,
-        padding: "10px 14px",
-      }}
-    >
+    <div style={{ background: GREY_BG, borderRadius: 8, padding: "10px 14px" }}>
       <div
         style={{
           fontSize: 11,
@@ -1143,7 +1467,7 @@ function StatBadge({ count, label, color, bg, borderColor }) {
   return (
     <div
       style={{
-        flex: 1,
+        flex: "1 1 120px",
         background: bg,
         border: `1px solid ${borderColor}`,
         borderRadius: 10,
@@ -1152,7 +1476,245 @@ function StatBadge({ count, label, color, bg, borderColor }) {
       }}
     >
       <div style={{ fontSize: 26, fontWeight: 800, color }}>{count}</div>
-      <div style={{ fontSize: 12, color, fontWeight: 600 }}>{label}</div>
+      <div style={{ fontSize: 11, color, fontWeight: 700, letterSpacing: 0.4 }}>{label}</div>
+    </div>
+  );
+}
+
+// ─── Charts ───────────────────────────────────────────────────────────────────
+
+function ConditionChart({ checklist }) {
+  const counts = gradeCounts(checklist);
+  const total =
+    counts["Excellent"] +
+    counts["Good"] +
+    counts["Acceptable - Has Wear"] +
+    counts["Needs Replacement"] +
+    counts.ungraded;
+  if (total === 0) {
+    return (
+      <div style={{ color: MID, fontSize: 13, textAlign: "center", padding: 20 }}>
+        No inspection data
+      </div>
+    );
+  }
+  const max = Math.max(
+    counts["Excellent"],
+    counts["Good"],
+    counts["Acceptable - Has Wear"],
+    counts["Needs Replacement"],
+    1
+  );
+  return (
+    <div style={{ display: "grid", gap: 10 }}>
+      {GRADES.map((g) => {
+        const n = counts[g];
+        const pct = (n / max) * 100;
+        const c = GRADE_COLORS[g];
+        return (
+          <div key={g}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: 12,
+                color: NAVY2,
+                fontWeight: 600,
+                marginBottom: 4,
+              }}
+            >
+              <span>{g}</span>
+              <span style={{ color: c.fg }}>
+                {n} ({total > 0 ? Math.round((n / total) * 100) : 0}%)
+              </span>
+            </div>
+            <div
+              style={{
+                background: NA_BG,
+                borderRadius: 6,
+                height: 14,
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: `${pct}%`,
+                  height: "100%",
+                  background: c.fg,
+                  borderRadius: 6,
+                  transition: "width 0.4s",
+                }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function LifecycleBar({ manufacturingDate, installDate }) {
+  if (!manufacturingDate) {
+    return (
+      <div
+        style={{
+          background: NA_BG,
+          border: `1px dashed ${BORDER}`,
+          borderRadius: 10,
+          padding: "14px 16px",
+          color: MID,
+          fontSize: 13,
+          textAlign: "center",
+        }}
+      >
+        Add a Manufacturing Date to see the lifecycle timeline.
+      </div>
+    );
+  }
+  const mfg = new Date(manufacturingDate);
+  const end = new Date(mfg);
+  end.setFullYear(end.getFullYear() + COMMERCIAL_LIFE_YEARS);
+  const today = new Date();
+  const install = installDate ? new Date(installDate) : null;
+
+  const span = end - mfg;
+  const pct = (d) =>
+    Math.max(0, Math.min(100, ((d - mfg) / span) * 100));
+  const todayPct = pct(today);
+  const installPct = install ? pct(install) : null;
+
+  const yearsUsed = Math.max(0, (today - mfg) / (1000 * 60 * 60 * 24 * 365.25));
+  const yearsRemaining = Math.max(
+    0,
+    COMMERCIAL_LIFE_YEARS - yearsUsed
+  );
+  const overdue = today > end;
+
+  const fmt = (d) => d.toISOString().slice(0, 10);
+
+  return (
+    <div>
+      <div
+        style={{
+          position: "relative",
+          background: `linear-gradient(to right, ${GRADE_COLORS["Excellent"].bg} 0%, ${GRADE_COLORS["Good"].bg} 33%, ${GRADE_COLORS["Acceptable - Has Wear"].bg} 66%, ${GRADE_COLORS["Needs Replacement"].bg} 100%)`,
+          height: 28,
+          borderRadius: 14,
+          border: `1px solid ${BORDER}`,
+          marginBottom: 8,
+        }}
+      >
+        {installPct !== null && (
+          <div
+            title={`Installed ${fmt(install)}`}
+            style={{
+              position: "absolute",
+              left: `${installPct}%`,
+              top: -6,
+              transform: "translateX(-50%)",
+              width: 2,
+              height: 40,
+              background: NAVY2,
+            }}
+          />
+        )}
+        <div
+          title={`Today ${fmt(today)}`}
+          style={{
+            position: "absolute",
+            left: `${todayPct}%`,
+            top: -10,
+            transform: "translateX(-50%)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <div
+            style={{
+              background: ORANGE,
+              color: "white",
+              fontSize: 10,
+              fontWeight: 700,
+              padding: "2px 6px",
+              borderRadius: 4,
+              marginBottom: 2,
+              whiteSpace: "nowrap",
+            }}
+          >
+            TODAY
+          </div>
+          <div style={{ width: 2, height: 30, background: ORANGE }} />
+        </div>
+      </div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          fontSize: 11,
+          color: MID,
+          fontWeight: 600,
+          marginBottom: 10,
+        }}
+      >
+        <span>Mfg {fmt(mfg)}</span>
+        <span>End-of-life {fmt(end)}</span>
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr 1fr",
+          gap: 8,
+          fontSize: 12,
+        }}
+      >
+        <LifecycleStat label="Age" value={`${yearsUsed.toFixed(1)} yrs`} />
+        <LifecycleStat
+          label="Expected Life"
+          value={`${COMMERCIAL_LIFE_YEARS} yrs`}
+        />
+        <LifecycleStat
+          label={overdue ? "Past End-of-Life" : "Remaining"}
+          value={overdue ? `${(-yearsRemaining + COMMERCIAL_LIFE_YEARS - yearsUsed).toFixed(1)} yrs over` : `${yearsRemaining.toFixed(1)} yrs`}
+          warn={overdue}
+        />
+      </div>
+    </div>
+  );
+}
+
+function LifecycleStat({ label, value, warn }) {
+  return (
+    <div
+      style={{
+        background: warn ? FAIL_BG : GREY_BG,
+        border: `1px solid ${warn ? "#fca5a5" : BORDER}`,
+        borderRadius: 8,
+        padding: "8px 10px",
+        textAlign: "center",
+      }}
+    >
+      <div
+        style={{
+          fontSize: 10,
+          color: warn ? FAIL_C : MID,
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: 0.5,
+          marginBottom: 2,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontSize: 13,
+          fontWeight: 700,
+          color: warn ? FAIL_C : NAVY2,
+        }}
+      >
+        {value}
+      </div>
     </div>
   );
 }
@@ -1160,15 +1722,8 @@ function StatBadge({ count, label, color, bg, borderColor }) {
 // ─── Report View ──────────────────────────────────────────────────────────────
 
 function ReportView({ job, emailState, onSend, onBack, onPrint }) {
-  const passes = Object.entries(job.checklist || {}).filter(
-    ([, v]) => v === "pass"
-  );
-  const fails = Object.entries(job.checklist || {}).filter(
-    ([, v]) => v === "fail"
-  );
-  const nas = Object.entries(job.checklist || {}).filter(
-    ([, v]) => v === "na"
-  );
+  const items = EQUIPMENT_TYPES[job.equipmentType] || Object.keys(job.checklist || {});
+  const counts = gradeCounts(job.checklist);
 
   return (
     <div style={{ maxWidth: 840, margin: "0 auto", padding: "20px" }}>
@@ -1279,14 +1834,7 @@ function ReportView({ job, emailState, onSend, onBack, onPrint }) {
           }}
         >
           <div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                marginBottom: 5,
-              }}
-            >
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 5 }}>
               <div
                 style={{
                   width: 34,
@@ -1299,11 +1847,7 @@ function ReportView({ job, emailState, onSend, onBack, onPrint }) {
                   flexShrink: 0,
                 }}
               >
-                <span
-                  style={{ color: "white", fontWeight: 900, fontSize: 18 }}
-                >
-                  G
-                </span>
+                <span style={{ color: "white", fontWeight: 900, fontSize: 18 }}>G</span>
               </div>
               <span
                 style={{
@@ -1317,16 +1861,14 @@ function ReportView({ job, emailState, onSend, onBack, onPrint }) {
               </span>
             </div>
             <div style={{ color: "#94a3b8", fontSize: 12, paddingLeft: 44 }}>
-              Gym Equipment Service &amp; Maintenance
+              Preventive Maintenance Report
             </div>
           </div>
           <div style={{ textAlign: "right" }}>
             <div style={{ color: ORANGE, fontWeight: 800, fontSize: 20 }}>
               #{job.jobNumber}
             </div>
-            <div style={{ color: "#94a3b8", fontSize: 12, marginTop: 2 }}>
-              {job.date}
-            </div>
+            <div style={{ color: "#94a3b8", fontSize: 12, marginTop: 2 }}>{job.date}</div>
             <div
               style={{
                 color: "#94a3b8",
@@ -1358,12 +1900,23 @@ function ReportView({ job, emailState, onSend, onBack, onPrint }) {
               <InfoRow label="Date" value={job.date} />
             </ReportSection>
             <ReportSection title="Equipment">
-              <InfoRow label="Type" value={job.equipmentType} />
+              <InfoRow
+                label="Type"
+                value={
+                  job.equipmentType
+                    ? `${EQUIPMENT_ICONS[job.equipmentType] || ""} ${job.equipmentType}`.trim()
+                    : "—"
+                }
+              />
               <InfoRow
                 label="Brand / Model"
                 value={`${job.brand} ${job.model}`.trim() || "—"}
               />
               <InfoRow label="Serial #" value={job.serialNumber} />
+              <InfoRow label="Asset ID" value={job.assetId} />
+              <InfoRow label="Location" value={job.location} />
+              <InfoRow label="Mfg Date" value={job.manufacturingDate} />
+              <InfoRow label="Install Date" value={job.installDate} />
               <InfoRow
                 label="Hours"
                 value={job.hoursOnUnit ? `${job.hoursOnUnit} hrs` : "—"}
@@ -1375,71 +1928,128 @@ function ReportView({ job, emailState, onSend, onBack, onPrint }) {
             </ReportSection>
           </div>
 
-          {/* Checklist */}
+          {/* Serial photo */}
+          {job.serialPhoto && (
+            <div style={{ marginBottom: 28 }}>
+              <SectionLabel>Serial Number Photo</SectionLabel>
+              <img
+                src={job.serialPhoto}
+                alt="Serial number"
+                style={{
+                  maxWidth: 240,
+                  maxHeight: 180,
+                  borderRadius: 10,
+                  border: `1px solid ${BORDER}`,
+                  display: "block",
+                }}
+              />
+            </div>
+          )}
+
+          {/* Condition Summary Chart */}
           <div style={{ marginBottom: 28 }}>
+            <SectionLabel>Condition Summary</SectionLabel>
             <div
               style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: MID,
-                textTransform: "uppercase",
-                letterSpacing: 0.6,
-                marginBottom: 12,
+                background: GREY_BG,
+                border: `1px solid ${BORDER}`,
+                borderRadius: 12,
+                padding: "18px 20px",
               }}
             >
-              Inspection Checklist
+              <ConditionChart checklist={job.checklist} />
             </div>
-            <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-              <Pill count={passes.length} label="Pass" color={PASS_C} bg={PASS_BG} />
-              <Pill count={fails.length} label="Fail" color={FAIL_C} bg={FAIL_BG} />
-              <Pill count={nas.length} label="N/A" color={MID} bg={NA_BG} />
-            </div>
+          </div>
+
+          {/* Lifecycle */}
+          <div style={{ marginBottom: 28 }}>
+            <SectionLabel>Equipment Lifecycle</SectionLabel>
             <div
               style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr 1fr",
-                gap: 6,
+                background: GREY_BG,
+                border: `1px solid ${BORDER}`,
+                borderRadius: 12,
+                padding: "20px 22px 18px",
               }}
             >
-              {CHECKLIST_ITEMS.map((item) => {
-                const val = job.checklist?.[item] || "pending";
-                const c =
-                  val === "pass" ? PASS_C : val === "fail" ? FAIL_C : MID;
-                const bg =
-                  val === "pass"
-                    ? PASS_BG
-                    : val === "fail"
-                    ? FAIL_BG
-                    : NA_BG;
+              <LifecycleBar
+                manufacturingDate={job.manufacturingDate}
+                installDate={job.installDate}
+              />
+            </div>
+          </div>
+
+          {/* Inspection Items */}
+          <div style={{ marginBottom: 28 }}>
+            <SectionLabel>Inspection Results</SectionLabel>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+              {GRADES.map((g) => (
+                <Pill
+                  key={g}
+                  count={counts[g]}
+                  label={GRADE_SHORT[g]}
+                  color={GRADE_COLORS[g].fg}
+                  bg={GRADE_COLORS[g].bg}
+                />
+              ))}
+              {counts.ungraded > 0 && (
+                <Pill
+                  count={counts.ungraded}
+                  label="Ungraded"
+                  color={MID}
+                  bg={NA_BG}
+                />
+              )}
+            </div>
+            <div style={{ display: "grid", gap: 6 }}>
+              {items.map((item) => {
+                const cell = job.checklist?.[item] || { grade: null, notes: "" };
+                const c = cell.grade ? GRADE_COLORS[cell.grade] : null;
                 return (
                   <div
                     key={item}
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      padding: "6px 10px",
-                      background: bg,
-                      borderRadius: 6,
+                      display: "grid",
+                      gridTemplateColumns: "1fr auto",
+                      gap: 10,
+                      padding: "9px 12px",
+                      background: c ? c.bg : NA_BG,
+                      border: `1px solid ${c ? c.border : BORDER}`,
+                      borderRadius: 8,
                     }}
                   >
+                    <div>
+                      <div style={{ fontSize: 13, color: NAVY2, fontWeight: 600 }}>
+                        {item}
+                      </div>
+                      {cell.notes && (
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: MID,
+                            marginTop: 3,
+                            fontStyle: "italic",
+                          }}
+                        >
+                          “{cell.notes}”
+                        </div>
+                      )}
+                    </div>
                     <span
                       style={{
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: 800,
-                        color: c,
-                        minWidth: 20,
+                        background: c ? c.fg : MID,
+                        color: "white",
+                        padding: "3px 9px",
+                        borderRadius: 12,
+                        whiteSpace: "nowrap",
+                        height: "fit-content",
+                        alignSelf: "center",
                       }}
                     >
-                      {val === "pass"
-                        ? "✓"
-                        : val === "fail"
-                        ? "✗"
-                        : val === "na"
-                        ? "—"
-                        : "·"}
+                      {cell.grade ? GRADE_SHORT[cell.grade].toUpperCase() : "—"}
                     </span>
-                    <span style={{ fontSize: 12, color: NAVY2 }}>{item}</span>
                   </div>
                 );
               })}
@@ -1499,16 +2109,10 @@ function ReportView({ job, emailState, onSend, onBack, onPrint }) {
                   <InfoBlock label="Issues Found" value={job.issuesFound} />
                 )}
                 {job.partsReplaced && (
-                  <InfoBlock
-                    label="Parts Replaced"
-                    value={job.partsReplaced}
-                  />
+                  <InfoBlock label="Parts Replaced" value={job.partsReplaced} />
                 )}
                 {job.recommendations && (
-                  <InfoBlock
-                    label="Recommendations"
-                    value={job.recommendations}
-                  />
+                  <InfoBlock label="Recommendations" value={job.recommendations} />
                 )}
               </ReportSection>
             </div>
@@ -1525,9 +2129,7 @@ function ReportView({ job, emailState, onSend, onBack, onPrint }) {
             }}
           >
             <div>
-              <div
-                style={{ fontSize: 12, color: MID, marginBottom: 24 }}
-              >
+              <div style={{ fontSize: 12, color: MID, marginBottom: 24 }}>
                 Technician Signature
               </div>
               <div
@@ -1542,12 +2144,8 @@ function ReportView({ job, emailState, onSend, onBack, onPrint }) {
               </div>
             </div>
             <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 11, color: MID }}>
-                Report generated by
-              </div>
-              <div
-                style={{ fontWeight: 800, color: NAVY, fontSize: 15 }}
-              >
+              <div style={{ fontSize: 11, color: MID }}>Report generated by</div>
+              <div style={{ fontWeight: 800, color: NAVY, fontSize: 15 }}>
                 Gymstallations
               </div>
               <div style={{ fontSize: 11, color: MID, marginTop: 2 }}>
@@ -1563,11 +2161,26 @@ function ReportView({ job, emailState, onSend, onBack, onPrint }) {
 
 // ─── Shared UI ────────────────────────────────────────────────────────────────
 
-function ReportSection({ title, children }) {
+function SectionLabel({ children }) {
   return (
     <div
-      style={{ background: GREY_BG, borderRadius: 10, padding: "16px 18px" }}
+      style={{
+        fontSize: 12,
+        fontWeight: 700,
+        color: MID,
+        textTransform: "uppercase",
+        letterSpacing: 0.6,
+        marginBottom: 12,
+      }}
     >
+      {children}
+    </div>
+  );
+}
+
+function ReportSection({ title, children }) {
+  return (
+    <div style={{ background: GREY_BG, borderRadius: 10, padding: "16px 18px" }}>
       <div
         style={{
           fontSize: 11,
@@ -1597,13 +2210,7 @@ function InfoRow({ label, value }) {
       }}
     >
       <span style={{ color: MID, flexShrink: 0 }}>{label}</span>
-      <span
-        style={{
-          fontWeight: 600,
-          color: NAVY2,
-          textAlign: "right",
-        }}
-      >
+      <span style={{ fontWeight: 600, color: NAVY2, textAlign: "right" }}>
         {value || "—"}
       </span>
     </div>
@@ -1625,9 +2232,7 @@ function InfoBlock({ label, value }) {
       >
         {label}
       </div>
-      <div style={{ fontSize: 13, color: NAVY2, lineHeight: 1.65 }}>
-        {value}
-      </div>
+      <div style={{ fontSize: 13, color: NAVY2, lineHeight: 1.65 }}>{value}</div>
     </div>
   );
 }
