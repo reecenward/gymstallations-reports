@@ -1,0 +1,55 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git pull --ff-only:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(cat /etc/os-release)",
+      "Bash(cat /etc/caddy/Caddyfile)",
+      "Bash(id gymstall)",
+      "Bash(node --version)",
+      "Bash(npm --version)",
+      "Bash(python3 --version)",
+      "Bash(caddy version)",
+      "Bash(curl -sf http://127.0.0.1:8000/*)",
+      "Bash(curl -sf https://*/api/health)",
+      "Bash(systemctl is-active *)",
+      "Bash(systemctl is-enabled *)",
+      "Bash(systemctl status *)",
+      "Bash(ss -ltnp:*)",
+      "Bash(sqlite3 /srv/gymstallations/server/data/app.db .tables)",
+      "Bash(sqlite3 /srv/gymstallations/server/data/app.db .schema)",
+      "Bash(sudo -u gymstall /srv/gymstallations/deploy/deploy.sh)",
+      "Bash(sudo -u gymstall git*)",
+      "Bash(sudo -u gymstall bash -lc *)",
+      "Bash(sudo systemctl restart gymstallations.service)",
+      "Bash(sudo systemctl reload caddy)",
+      "Bash(sudo systemctl status *)",
+      "Bash(sudo systemctl daemon-reload)",
+      "Bash(sudo journalctl -u gymstallations.service*)",
+      "Bash(sudo journalctl -u caddy*)"
+    ],
+    "ask": [
+      "Bash(sudo apt*)",
+      "Bash(sudo useradd*)",
+      "Bash(sudo cp*)",
+      "Bash(sudo tee*)",
+      "Bash(sudo chmod*)",
+      "Bash(sudo chown*)",
+      "Bash(sudo mkdir*)",
+      "Bash(sudo sed*)",
+      "Bash(sudo systemctl enable*)",
+      "Bash(sudo systemctl disable*)"
+    ],
+    "deny": [
+      "Bash(rm -rf /srv/gymstallations/server/data*)",
+      "Bash(rm /srv/gymstallations/server/.env*)",
+      "Bash(rm /srv/gymstallations/server/data/app.db*)",
+      "Bash(git push --force*)",
+      "Bash(git reset --hard*)",
+      "Bash(git clean -fd*)"
+    ]
+  }
+}

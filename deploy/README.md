@@ -3,6 +3,34 @@
 Single box, single domain. React static files + FastAPI behind Caddy. SQLite
 on disk. Anything Debian/Ubuntu/Rocky-flavored with systemd works.
 
+## Easy mode: let Claude Code do it
+
+If you have an Anthropic API key, the fastest path is to run Claude Code on
+the server and use the slash commands shipped in this repo.
+
+```bash
+# On the server, as a sudoer:
+curl -fsSL https://claude.ai/install.sh | bash    # installs the `claude` CLI
+sudo apt install -y git
+sudo mkdir -p /srv/gymstallations
+sudo chown $USER /srv/gymstallations
+git clone https://github.com/reecenward/gymstallations-reports.git /srv/gymstallations
+cd /srv/gymstallations
+
+claude                  # launch Claude Code
+```
+
+Then in the Claude prompt:
+
+- First time on this server: `/setup` — it walks you through everything below
+  interactively, asking only for your domain and pausing while you fill in
+  `server/.env`.
+- Every update after that: `/deploy` — pulls latest, rebuilds, restarts.
+
+The slash commands and pre-approved permissions are checked into
+[.claude/](../.claude/) so they Just Work. You can still do everything by hand
+using the steps below if you'd rather.
+
 ## What you need before starting
 
 - A Linux server you can SSH into as a sudoer.
