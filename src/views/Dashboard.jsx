@@ -1,4 +1,4 @@
-import { ClipboardList, Plus, ChevronRight } from "lucide-react";
+import { ClipboardList, Plus, ChevronRight, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,19 +22,33 @@ function BrandMark() {
   );
 }
 
-export function Dashboard({ jobs, onNew, onView }) {
+export function Dashboard({ jobs, onNew, onView, onLogout, user }) {
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
       <div className="mb-6 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-center sm:justify-between">
         <BrandMark />
-        <Button
-          onClick={onNew}
-          size="lg"
-          className="w-full sm:w-auto"
-        >
-          <Plus className="size-4" />
-          New Report
-        </Button>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+          {user && (
+            <span className="text-sm text-muted-foreground sm:mr-2">
+              {user.full_name || user.email}
+            </span>
+          )}
+          <Button onClick={onNew} size="lg" className="w-full sm:w-auto">
+            <Plus className="size-4" />
+            New Report
+          </Button>
+          {onLogout && (
+            <Button
+              onClick={onLogout}
+              size="lg"
+              variant="outline"
+              className="w-full sm:w-auto"
+            >
+              <LogOut className="size-4" />
+              Sign out
+            </Button>
+          )}
+        </div>
       </div>
 
       {jobs.length === 0 ? (

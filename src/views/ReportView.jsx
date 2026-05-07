@@ -90,6 +90,12 @@ export function ReportView({ job, emailState, onSend, onBack, onPrint }) {
               Report Sent
             </Button>
           )}
+          {emailState === "failed" && (
+            <Button variant="destructive" onClick={onSend}>
+              <Send className="size-4" />
+              Email Failed
+            </Button>
+          )}
         </div>
       </div>
 
