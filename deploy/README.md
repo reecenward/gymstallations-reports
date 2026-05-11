@@ -97,7 +97,7 @@ sudo -u gymstall bash -lc 'cd /srv/gymstallations/server && \
     ./.venv/bin/pip install --upgrade pip && \
     ./.venv/bin/pip install -e .'
 
-sudo -u gymstall bash -lc 'cd /srv/gymstallations && \
+sudo -u gymstall bash -lc 'cd /srv/gymstallations/frontend && \
     npm ci && npm run build'
 
 # 6. Install the systemd unit
@@ -164,7 +164,7 @@ sudo crontab -e
 
 - API not responding: `sudo journalctl -u gymstallations.service -n 100 --no-pager`
 - Caddy / TLS issues: `sudo journalctl -u caddy -n 100 --no-pager`
-- Frontend looks stale: did `npm run build` succeed? Check `/srv/gymstallations/dist/` mtime.
+- Frontend looks stale: did `npm run build` succeed? Check `/srv/gymstallations/frontend/dist/` mtime.
 - 502 from `/api/*`: API isn't bound on `127.0.0.1:8000` — `sudo ss -ltnp | grep 8000`.
 - Email keeps `email_status=failed`: check `app.db` for `email_error`, then verify SMTP creds with `swaks --to you@example.com --server $SMTP_HOST:587 --auth LOGIN --auth-user $SMTP_USER --auth-password $SMTP_PASS -tls`.
 

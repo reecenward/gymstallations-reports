@@ -19,7 +19,7 @@ fi
 ./.venv/bin/pip install -e . >/dev/null
 
 echo "==> frontend build"
-cd "$APP_DIR"
+cd "$APP_DIR/frontend"
 npm ci --no-audit --no-fund
 npm run build
 

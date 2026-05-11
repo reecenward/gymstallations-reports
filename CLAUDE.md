@@ -7,7 +7,7 @@ the current repo, you're on the deploy server.
 
 ## Stack
 
-- **Frontend**: React + Vite + Tailwind + shadcn/ui (in `src/`). Builds to `dist/`.
+- **Frontend**: React + Vite + Tailwind + shadcn/ui (in `frontend/`). Builds to `frontend/dist/`.
 - **Backend**: FastAPI + SQLite + JWT + SMTP (in `server/`). Runs as `uvicorn app.main:app`.
 - **Hosting**: single Linux box. Caddy reverse-proxies `/api/*` to uvicorn on
   127.0.0.1:8000 and serves `dist/` as the SPA root.
@@ -21,7 +21,7 @@ The server is laid out exactly like this — assume nothing else:
 - Backend env: `/srv/gymstallations/server/.env` (already populated by the
   human; do not overwrite)
 - SQLite DB: `/srv/gymstallations/server/data/app.db` (NEVER delete)
-- Frontend build output: `/srv/gymstallations/dist`
+- Frontend build output: `/srv/gymstallations/frontend/dist`
 - systemd unit: `gymstallations.service`
 - Reverse proxy: `caddy` reading `/etc/caddy/Caddyfile`
 
@@ -59,6 +59,6 @@ cp .env.example .env   # only if missing
 uvicorn app.main:app --reload
 
 # frontend (separate terminal)
-npm install
+cd frontend && npm install
 npm run dev
 ```

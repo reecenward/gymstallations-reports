@@ -15,7 +15,7 @@ yourdomain.com {
 
     # Static React build, with SPA fallback to index.html for client routes.
     handle {
-        root * /srv/gymstallations/dist
+        root * /srv/gymstallations/frontend/dist
         try_files {path} /index.html
         file_server
     }
