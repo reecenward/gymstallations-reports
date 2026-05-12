@@ -3,7 +3,7 @@ import json
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from ..db import connect
-from ..email_sender import send_report_email
+from ..form_handler import forward_report
 from ..models import ReportDetail, ReportSubmission, ReportSummary, SubmitReportResponse
 from ..security import get_current_user
 
@@ -36,7 +36,7 @@ def submit_report(body: ReportSubmission, current=Depends(get_current_user)):
             "SELECT submitted_at FROM reports WHERE id = ?", (report_id,)
         ).fetchone()
 
-    ok, err = send_report_email(payload, technician_email=current["email"])
+    ok, err = forward_report(payload, technician_email=current["email"])
     new_status = "sent" if ok else "failed"
 
     with connect() as conn:

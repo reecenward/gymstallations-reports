@@ -36,8 +36,8 @@ using the steps below if you'd rather.
 - A Linux server you can SSH into as a sudoer.
 - A domain (or subdomain) with an A record pointing at the server's IP.
 - Ports 80 and 443 open on the firewall.
-- SMTP credentials (Gmail app password, SendGrid, Postmark, Mailgun — anything
-  speaking SMTP on 587 with STARTTLS).
+- A form-handler webhook URL that will receive submitted report payloads
+  (the backend POSTs JSON; the webhook owns email/Slack/etc.).
 
 ## One-time server setup
 
@@ -83,8 +83,7 @@ sudo -u gymstall nano /srv/gymstallations/server/.env
 Set at minimum:
 
 - `JWT_SECRET=` → generate with `python3 -c "import secrets; print(secrets.token_urlsafe(48))"`
-- `SMTP_HOST=`, `SMTP_PORT=587`, `SMTP_USER=`, `SMTP_PASS=`, `SMTP_FROM=`
-- `REPORT_RECIPIENT=` → the inbox that should receive submitted reports
+- `FORM_HANDLER_URL=https://your-form-handler/submit` → webhook the backend POSTs report JSON to
 - `CORS_ORIGINS=https://yourdomain.com` (no trailing slash)
 - `DB_PATH=/srv/gymstallations/server/data/app.db` (default works)
 
@@ -166,7 +165,7 @@ sudo crontab -e
 - Caddy / TLS issues: `sudo journalctl -u caddy -n 100 --no-pager`
 - Frontend looks stale: did `npm run build` succeed? Check `/srv/gymstallations/frontend/dist/` mtime.
 - 502 from `/api/*`: API isn't bound on `127.0.0.1:8000` — `sudo ss -ltnp | grep 8000`.
-- Email keeps `email_status=failed`: check `app.db` for `email_error`, then verify SMTP creds with `swaks --to you@example.com --server $SMTP_HOST:587 --auth LOGIN --auth-user $SMTP_USER --auth-password $SMTP_PASS -tls`.
+- Submissions keep `email_status=failed`: check `app.db` for `email_error`. Verify the webhook is reachable from the server with `curl -i -X POST $FORM_HANDLER_URL -H 'Content-Type: application/json' -d '{"test":true}'`.
 
 ## Switching off Vercel (if the React app is currently there)
 

@@ -14,9 +14,10 @@ Ask the user **only if you can't infer them**:
 1. **Domain** they want the app at (e.g. `reports.example.com`). Required.
 2. **GitHub repo URL** — default `https://github.com/reecenward/gymstallations-reports.git`.
    Confirm before using.
-3. **SMTP / app secrets** — do NOT collect these here. They go directly into
+3. **App secrets** — do NOT collect these here. They go directly into
    `/srv/gymstallations/server/.env` after the clone. Tell the user you'll
-   pause for them to fill that file.
+   pause for them to fill that file. The only required value beyond the
+   defaults is `FORM_HANDLER_URL` (the webhook that receives report payloads).
 
 ## Steps (run sequentially, confirm before each `sudo`)
 
@@ -53,8 +54,8 @@ Ask the user **only if you can't infer them**:
 
 7. **Backend env**: if `/srv/gymstallations/server/.env` doesn't exist, copy
    `.env.example` over and **STOP**. Tell the user:
-   > "Edit `/srv/gymstallations/server/.env` now — set `JWT_SECRET`, all
-   > `SMTP_*` vars, `REPORT_RECIPIENT`, and set `CORS_ORIGINS=https://<domain>`.
+   > "Edit `/srv/gymstallations/server/.env` now — set `JWT_SECRET`,
+   > `FORM_HANDLER_URL`, and set `CORS_ORIGINS=https://<domain>`.
    > Reply 'done' when finished."
    Suggest generating the JWT secret with:
    `python3 -c "import secrets; print(secrets.token_urlsafe(48))"`

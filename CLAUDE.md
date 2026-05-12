@@ -8,7 +8,7 @@ the current repo, you're on the deploy server.
 ## Stack
 
 - **Frontend**: React + Vite + Tailwind + shadcn/ui (in `frontend/`). Builds to `frontend/dist/`.
-- **Backend**: FastAPI + SQLite + JWT + SMTP (in `server/`). Runs as `uvicorn app.main:app`.
+- **Backend**: FastAPI + SQLite + JWT (in `server/`). On report submission it POSTs the payload to a configurable `FORM_HANDLER_URL` webhook; no SMTP. Runs as `uvicorn app.main:app`.
 - **Hosting**: single Linux box. Caddy reverse-proxies `/api/*` to uvicorn on
   127.0.0.1:8000 and serves `dist/` as the SPA root.
 

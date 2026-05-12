@@ -10,12 +10,9 @@ class Settings(BaseSettings):
 
     cors_origins: str = "http://localhost:5173"
 
-    smtp_host: str = ""
-    smtp_port: int = 587
-    smtp_user: str = ""
-    smtp_pass: str = ""
-    smtp_from: str = ""
-    report_recipient: str = ""
+    # Webhook that receives submitted report payloads. The destination service
+    # is responsible for any downstream notification (email, Slack, etc.).
+    form_handler_url: str = ""
 
     @property
     def cors_origin_list(self) -> list[str]:

@@ -1,8 +1,8 @@
 # Gymstallations Server
 
 FastAPI + SQLite backend for the Gymstallations report generator. Handles
-technician auth, persists submitted reports, and emails an HTML summary
-with the raw JSON attached.
+technician auth, persists submitted reports, and forwards each submission to
+a configurable form-handler webhook (the webhook owns email / Slack / etc.).
 
 ## Run
 
@@ -13,7 +13,7 @@ source .venv/bin/activate
 pip install -e .
 
 cp .env.example .env
-# edit .env — at minimum set JWT_SECRET and SMTP_* / REPORT_RECIPIENT
+# edit .env — at minimum set JWT_SECRET and FORM_HANDLER_URL
 
 uvicorn app.main:app --reload
 ```
@@ -27,12 +27,19 @@ The SQLite file is created on first run at `DB_PATH` (default `./data/app.db`).
 - `POST /auth/register` — `{email, password, full_name}`
 - `POST /auth/login` — `{email, password}` → `{access_token, user}`
 - `GET  /auth/me` — current user (Bearer token)
-- `POST /reports` — submit a report; persists to SQLite and emails the recipient
+- `POST /reports` — submit a report; persists to SQLite and POSTs to `FORM_HANDLER_URL`
 - `GET  /reports` — list current user's reports
 - `GET  /reports/{id}` — full payload for one report
 
-## Email
+## Form-handler webhook
 
-Uses `smtplib` with `STARTTLS`. Tested with Gmail (app password) and SendGrid SMTP.
-If sending fails, the report is still saved with `email_status='failed'` so the
-UI can show it and a "resend" can be added later.
+On `POST /reports` the backend sends a JSON POST to `FORM_HANDLER_URL` with:
+
+```json
+{ "technician_email": "tech@example.com", "report": { ...full payload... } }
+```
+
+If the webhook returns non-2xx (or is unreachable), the report is still saved
+to SQLite with `email_status='failed'` and `email_error` populated, so nothing
+is lost. The column names are kept for backwards compatibility — they now mean
+"forwarded to webhook" rather than "emailed".
