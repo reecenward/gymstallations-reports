@@ -9,6 +9,10 @@ import { AdminUsersView } from "@/views/AdminUsersView";
 import { makeDraft, makeInitialChecklist } from "@/lib/equipment";
 import { api, getToken, clearToken } from "@/lib/api";
 
+function creatorLabel(emailOrName, name) {
+  return name || emailOrName || null;
+}
+
 function jobFromServer(detail) {
   const p = detail.payload || {};
   return {
@@ -16,6 +20,8 @@ function jobFromServer(detail) {
     id: detail.id,
     submittedAt: detail.submitted_at,
     emailStatus: detail.email_status,
+    createdBy: creatorLabel(detail.created_by_email, detail.created_by_name),
+    createdByEmail: detail.created_by_email || null,
   };
 }
 
@@ -30,6 +36,8 @@ function summaryToJob(s) {
     date: (s.submitted_at || "").slice(0, 10),
     submittedAt: s.submitted_at,
     emailStatus: s.email_status,
+    createdBy: creatorLabel(s.created_by_email, s.created_by_name),
+    createdByEmail: s.created_by_email || null,
     checklist: {},
   };
 }

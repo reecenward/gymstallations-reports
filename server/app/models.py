@@ -72,6 +72,8 @@ class ReportSummary(BaseModel):
     equipment_type: Optional[str]
     submitted_at: str
     email_status: str
+    created_by_email: Optional[str] = None
+    created_by_name: Optional[str] = None
 
 
 class ReportDetail(ReportSummary):

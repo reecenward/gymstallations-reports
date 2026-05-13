@@ -108,6 +108,11 @@ export function Dashboard({ jobs, onNew, onView, onLogout, onManageUsers, user }
                         {job.equipmentType} · {job.brand} {job.model} ·{" "}
                         {job.date} · #{job.jobNumber}
                       </div>
+                      {job.createdBy && (
+                        <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                          by {job.createdBy}
+                        </div>
+                      )}
                       {replace > 0 && (
                         <Badge variant="destructive" className="mt-2">
                           {replace} item{replace !== 1 ? "s" : ""} need

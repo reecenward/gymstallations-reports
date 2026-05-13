@@ -54,40 +54,72 @@ def submit_report(body: ReportSubmission, current=Depends(get_current_user)):
     )
 
 
+_SUMMARY_COLUMNS = """
+    r.id, r.job_number, r.client_name, r.equipment_type,
+    r.submitted_at, r.email_status,
+    u.email AS created_by_email, u.full_name AS created_by_name
+"""
+
+
+def _row_to_summary(r) -> ReportSummary:
+    return ReportSummary(
+        id=r["id"],
+        job_number=r["job_number"],
+        client_name=r["client_name"],
+        equipment_type=r["equipment_type"],
+        submitted_at=r["submitted_at"],
+        email_status=r["email_status"],
+        created_by_email=r["created_by_email"],
+        created_by_name=r["created_by_name"],
+    )
+
+
 @router.get("", response_model=list[ReportSummary])
 def list_reports(current=Depends(get_current_user)):
+    is_admin = bool(current.get("is_admin"))
     with connect() as conn:
-        rows = conn.execute(
-            """
-            SELECT id, job_number, client_name, equipment_type, submitted_at, email_status
-            FROM reports WHERE user_id = ? ORDER BY id DESC
-            """,
-            (current["id"],),
-        ).fetchall()
-    return [
-        ReportSummary(
-            id=r["id"],
-            job_number=r["job_number"],
-            client_name=r["client_name"],
-            equipment_type=r["equipment_type"],
-            submitted_at=r["submitted_at"],
-            email_status=r["email_status"],
-        )
-        for r in rows
-    ]
+        if is_admin:
+            rows = conn.execute(
+                f"""
+                SELECT {_SUMMARY_COLUMNS}
+                FROM reports r LEFT JOIN users u ON u.id = r.user_id
+                ORDER BY r.id DESC
+                """
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                f"""
+                SELECT {_SUMMARY_COLUMNS}
+                FROM reports r LEFT JOIN users u ON u.id = r.user_id
+                WHERE r.user_id = ? ORDER BY r.id DESC
+                """,
+                (current["id"],),
+            ).fetchall()
+    return [_row_to_summary(r) for r in rows]
 
 
 @router.get("/{report_id}", response_model=ReportDetail)
 def get_report(report_id: int, current=Depends(get_current_user)):
+    is_admin = bool(current.get("is_admin"))
     with connect() as conn:
-        row = conn.execute(
-            """
-            SELECT id, job_number, client_name, equipment_type, submitted_at,
-                   email_status, email_error, payload_json
-            FROM reports WHERE id = ? AND user_id = ?
-            """,
-            (report_id, current["id"]),
-        ).fetchone()
+        if is_admin:
+            row = conn.execute(
+                f"""
+                SELECT {_SUMMARY_COLUMNS}, r.email_error, r.payload_json
+                FROM reports r LEFT JOIN users u ON u.id = r.user_id
+                WHERE r.id = ?
+                """,
+                (report_id,),
+            ).fetchone()
+        else:
+            row = conn.execute(
+                f"""
+                SELECT {_SUMMARY_COLUMNS}, r.email_error, r.payload_json
+                FROM reports r LEFT JOIN users u ON u.id = r.user_id
+                WHERE r.id = ? AND r.user_id = ?
+                """,
+                (report_id, current["id"]),
+            ).fetchone()
     if row is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found")
     return ReportDetail(
@@ -99,4 +131,6 @@ def get_report(report_id: int, current=Depends(get_current_user)):
         email_status=row["email_status"],
         email_error=row["email_error"],
         payload=json.loads(row["payload_json"]),
+        created_by_email=row["created_by_email"],
+        created_by_name=row["created_by_name"],
     )
