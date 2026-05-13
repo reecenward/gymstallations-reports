@@ -1,4 +1,4 @@
-import { ClipboardList, Plus, ChevronRight, LogOut } from "lucide-react";
+import { ClipboardList, Plus, ChevronRight, LogOut, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +22,7 @@ function BrandMark() {
   );
 }
 
-export function Dashboard({ jobs, onNew, onView, onLogout, user }) {
+export function Dashboard({ jobs, onNew, onView, onLogout, onManageUsers, user }) {
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
       <div className="mb-6 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-center sm:justify-between">
@@ -37,6 +37,17 @@ export function Dashboard({ jobs, onNew, onView, onLogout, user }) {
             <Plus className="size-4" />
             New Report
           </Button>
+          {onManageUsers && (
+            <Button
+              onClick={onManageUsers}
+              size="lg"
+              variant="outline"
+              className="w-full sm:w-auto"
+            >
+              <Users className="size-4" />
+              Users
+            </Button>
+          )}
           {onLogout && (
             <Button
               onClick={onLogout}

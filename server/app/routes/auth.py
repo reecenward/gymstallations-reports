@@ -3,7 +3,7 @@ import sqlite3
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from ..db import connect
-from ..models import AuthResponse, LoginRequest, RegisterRequest, UserOut
+from ..models import AuthResponse, LoginRequest, RegisterRequest, UpdateUserRequest, UserOut
 from ..security import (
     create_access_token,
     get_current_admin,
@@ -24,6 +24,15 @@ def _user_to_out(row) -> UserOut:
         is_admin=bool(row["is_admin"]) if "is_admin" in keys else False,
         created_at=row["created_at"] if "created_at" in keys else None,
     )
+
+
+@router.get("/users", response_model=list[UserOut])
+def list_users(_admin=Depends(get_current_admin)):
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT id, email, full_name, is_admin, created_at FROM users ORDER BY id"
+        ).fetchall()
+    return [_user_to_out(r) for r in rows]
 
 
 @router.post("/users", response_model=UserOut, status_code=status.HTTP_201_CREATED)
@@ -47,6 +56,49 @@ def create_user(body: RegisterRequest, _admin=Depends(get_current_admin)):
             detail="Email already registered",
         )
     return _user_to_out(row)
+
+
+@router.patch("/users/{user_id}", response_model=UserOut)
+def update_user(user_id: int, body: UpdateUserRequest, admin=Depends(get_current_admin)):
+    updates = []
+    params: list = []
+    if body.is_admin is not None:
+        if user_id == admin["id"] and body.is_admin is False:
+            raise HTTPException(status_code=400, detail="You can't demote yourself.")
+        updates.append("is_admin = ?")
+        params.append(1 if body.is_admin else 0)
+    if body.password is not None:
+        if len(body.password) < 6:
+            raise HTTPException(status_code=400, detail="Password too short")
+        updates.append("password_hash = ?")
+        params.append(hash_password(body.password))
+    if body.full_name is not None:
+        updates.append("full_name = ?")
+        params.append(body.full_name)
+    if not updates:
+        raise HTTPException(status_code=400, detail="Nothing to update")
+    params.append(user_id)
+    with connect() as conn:
+        cur = conn.execute(f"UPDATE users SET {', '.join(updates)} WHERE id = ?", params)
+        conn.commit()
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="User not found")
+        row = conn.execute(
+            "SELECT id, email, full_name, is_admin, created_at FROM users WHERE id = ?",
+            (user_id,),
+        ).fetchone()
+    return _user_to_out(row)
+
+
+@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(user_id: int, admin=Depends(get_current_admin)):
+    if user_id == admin["id"]:
+        raise HTTPException(status_code=400, detail="You can't delete yourself.")
+    with connect() as conn:
+        cur = conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        conn.commit()
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="User not found")
 
 
 @router.post("/login", response_model=AuthResponse)

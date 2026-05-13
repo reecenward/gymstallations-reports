@@ -5,6 +5,7 @@ import { Dashboard } from "@/views/Dashboard";
 import { FormView } from "@/views/FormView";
 import { ReportView } from "@/views/ReportView";
 import { LoginView } from "@/views/LoginView";
+import { AdminUsersView } from "@/views/AdminUsersView";
 import { makeDraft, makeInitialChecklist } from "@/lib/equipment";
 import { api, getToken, clearToken } from "@/lib/api";
 
@@ -214,8 +215,12 @@ export default function App() {
           onNew={startNew}
           onView={openJob}
           onLogout={logout}
+          onManageUsers={user.is_admin ? () => setView("users") : null}
           user={user}
         />
+      )}
+      {view === "users" && (
+        <AdminUsersView currentUser={user} onBack={() => setView("dashboard")} />
       )}
       {view === "form" && (
         <FormView

@@ -15,6 +15,12 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class UpdateUserRequest(BaseModel):
+    is_admin: Optional[bool] = None
+    password: Optional[str] = None
+    full_name: Optional[str] = None
+
+
 class UserOut(BaseModel):
     id: int
     email: EmailStr
