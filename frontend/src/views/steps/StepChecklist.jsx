@@ -1,12 +1,9 @@
 import { Input } from "@/components/ui/input";
-import { GradePill } from "@/components/GradeBadge";
 import {
   EQUIPMENT_TYPES,
-  EQUIPMENT_ICONS,
   GRADES,
   GRADE_SHORT,
   GRADE_TW,
-  gradeCounts,
 } from "@/lib/equipment";
 import { cn } from "@/lib/utils";
 
@@ -16,35 +13,17 @@ export function StepChecklist({
   updChecklistNotes,
 }) {
   const items = EQUIPMENT_TYPES[draft.equipmentType] || [];
-  const counts = gradeCounts(draft.checklist);
 
   return (
     <div>
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <div className="text-lg font-bold text-navy">Inspection Checklist</div>
-        <div className="text-xs text-muted-foreground">
-          {EQUIPMENT_ICONS[draft.equipmentType]} {draft.equipmentType} ·{" "}
-          {items.length} items
-        </div>
+      <div className="mb-1 text-sm font-semibold text-navy">
+        Inspect each item
       </div>
+      <p className="mb-4 text-xs text-muted-foreground">
+        Tap a grade. Notes are optional.
+      </p>
 
-      <div className="mb-4 flex flex-wrap gap-1.5">
-        {GRADES.map((g) => (
-          <GradePill
-            key={g}
-            grade={g}
-            count={counts[g]}
-            label={GRADE_SHORT[g]}
-          />
-        ))}
-        {counts.ungraded > 0 && (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
-            <span className="font-bold">{counts.ungraded}</span> ungraded
-          </span>
-        )}
-      </div>
-
-      <div className="space-y-2.5">
+      <div className="space-y-3">
         {items.map((item) => {
           const cell = draft.checklist[item] || { grade: null, notes: "" };
           const grade = cell.grade;
@@ -57,10 +36,10 @@ export function StepChecklist({
                 tw ? `${tw.bg} ${tw.border}` : "border-slate-200 bg-white"
               )}
             >
-              <div className="mb-2.5 text-sm font-semibold text-navy-soft">
+              <div className="mb-2 text-sm font-semibold text-navy-soft">
                 {item}
               </div>
-              <div className="mb-2.5 grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap">
+              <div className="mb-2 grid grid-cols-4 gap-1.5">
                 {GRADES.map((g) => {
                   const sel = grade === g;
                   const gtw = GRADE_TW[g];
@@ -70,11 +49,11 @@ export function StepChecklist({
                       type="button"
                       onClick={() => updChecklistGrade(item, g)}
                       className={cn(
-                        "h-9 rounded-md border px-3 text-xs font-bold transition-colors",
+                        "h-12 rounded-md border text-sm font-bold transition-colors",
                         "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                         sel
                           ? `${gtw.solid} border-transparent`
-                          : `bg-white ${gtw.text} ${gtw.border} hover:bg-slate-50`
+                          : `bg-white ${gtw.text} ${gtw.border} active:bg-slate-50`
                       )}
                     >
                       {GRADE_SHORT[g]}
@@ -86,7 +65,7 @@ export function StepChecklist({
                 value={cell.notes}
                 onChange={(e) => updChecklistNotes(item, e.target.value)}
                 placeholder="Notes (optional)"
-                className="bg-white text-sm"
+                className="h-10 bg-white text-sm"
               />
             </div>
           );
