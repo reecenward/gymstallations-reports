@@ -52,9 +52,18 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
 
     with connect() as conn:
         row = conn.execute(
-            "SELECT id, email, full_name, created_at FROM users WHERE id = ?",
+            "SELECT id, email, full_name, is_admin, created_at FROM users WHERE id = ?",
             (user_id,),
         ).fetchone()
     if row is None:
         raise creds_err
     return dict(row)
+
+
+def get_current_admin(current=Depends(get_current_user)) -> dict:
+    if not current.get("is_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required",
+        )
+    return current

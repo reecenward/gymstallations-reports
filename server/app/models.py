@@ -7,6 +7,7 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=6)
     full_name: Optional[str] = None
+    is_admin: bool = False
 
 
 class LoginRequest(BaseModel):
@@ -18,6 +19,7 @@ class UserOut(BaseModel):
     id: int
     email: EmailStr
     full_name: Optional[str] = None
+    is_admin: bool = False
     created_at: Optional[str] = None
 
 

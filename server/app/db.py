@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   full_name TEXT,
+  is_admin INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -36,6 +37,11 @@ def init_db() -> None:
         os.makedirs(db_dir, exist_ok=True)
     with connect() as conn:
         conn.executescript(SCHEMA)
+        # Add columns introduced after the original schema. SQLite has no
+        # IF NOT EXISTS for ADD COLUMN, so we probe pragma_table_info first.
+        cols = {r["name"] for r in conn.execute("PRAGMA table_info(users)")}
+        if "is_admin" not in cols:
+            conn.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
         conn.commit()
 
 

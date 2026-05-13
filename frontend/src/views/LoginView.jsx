@@ -7,20 +7,15 @@ import { Label } from "@/components/ui/label";
 import { api, setToken } from "@/lib/api";
 
 export function LoginView({ onAuthed }) {
-  const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
 
   const submit = async (e) => {
     e.preventDefault();
     setBusy(true);
     try {
-      const res =
-        mode === "login"
-          ? await api.login(email, password)
-          : await api.register(email, password, fullName || null);
+      const res = await api.login(email, password);
       setToken(res.access_token);
       onAuthed(res.user);
     } catch (err) {
@@ -46,21 +41,8 @@ export function LoginView({ onAuthed }) {
 
       <Card>
         <CardContent className="p-6">
-          <h1 className="mb-4 text-lg font-bold text-navy">
-            {mode === "login" ? "Sign in" : "Create account"}
-          </h1>
+          <h1 className="mb-4 text-lg font-bold text-navy">Sign in</h1>
           <form className="space-y-4" onSubmit={submit}>
-            {mode === "register" && (
-              <div className="space-y-1.5">
-                <Label htmlFor="full_name">Name</Label>
-                <Input
-                  id="full_name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Your name"
-                />
-              </div>
-            )}
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -81,42 +63,16 @@ export function LoginView({ onAuthed }) {
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                autoComplete={mode === "login" ? "current-password" : "new-password"}
+                autoComplete="current-password"
               />
             </div>
             <Button type="submit" className="w-full" disabled={busy}>
-              {busy
-                ? "Please wait…"
-                : mode === "login"
-                ? "Sign in"
-                : "Create account"}
+              {busy ? "Please wait…" : "Sign in"}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm text-muted-foreground">
-            {mode === "login" ? (
-              <>
-                No account?{" "}
-                <button
-                  className="font-medium text-primary hover:underline"
-                  onClick={() => setMode("register")}
-                  type="button"
-                >
-                  Register
-                </button>
-              </>
-            ) : (
-              <>
-                Have an account?{" "}
-                <button
-                  className="font-medium text-primary hover:underline"
-                  onClick={() => setMode("login")}
-                  type="button"
-                >
-                  Sign in
-                </button>
-              </>
-            )}
-          </div>
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            Accounts are created by the administrator.
+          </p>
         </CardContent>
       </Card>
     </div>
