@@ -27,7 +27,4 @@ echo "==> restart api"
 sudo systemctl restart gymstallations.service
 sudo systemctl status gymstallations.service --no-pager --lines=3
 
-echo "==> reload caddy"
-sudo systemctl reload caddy
-
 echo "Deployed."
