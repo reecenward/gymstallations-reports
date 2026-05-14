@@ -143,7 +143,7 @@ function ItemCard({ item, index }) {
           </div>
         )}
 
-        <HealthSummary item={item} title="Condition" />
+        <HealthSummary item={item} title="Condition" showPhotos={false} />
 
         {issues.length > 0 && (
           <div>

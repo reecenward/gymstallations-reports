@@ -1,4 +1,10 @@
-import { GRADES, GRADE_COLORS, GRADE_SHORT, gradeCounts } from "@/lib/equipment";
+import {
+  GRADES,
+  GRADE_COLORS,
+  GRADE_SHORT,
+  REPLACEMENT_GRADE,
+  gradeCounts,
+} from "@/lib/equipment";
 
 // Weighted health score across the 3 grades.
 const WEIGHTS = {
@@ -100,8 +106,46 @@ function Bars({ counts, total }) {
   );
 }
 
+function PhotoStrip({ item }) {
+  const issueCells = Object.entries(item?.checklist || {}).filter(
+    ([, c]) => c && c.grade === REPLACEMENT_GRADE && c.photo
+  );
+  const tiles = [
+    item?.distancePhoto && { src: item.distancePhoto, label: "Equipment" },
+    item?.serialPhoto && { src: item.serialPhoto, label: "Serial #" },
+    ...issueCells.map(([label, cell]) => ({
+      src: cell.photo,
+      label: `Issue · ${label}`,
+    })),
+  ].filter(Boolean);
+
+  if (tiles.length === 0) return null;
+  return (
+    <div className="mt-5 border-t border-neutral-100 pt-4">
+      <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+        Photos
+      </div>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {tiles.map((t, i) => (
+          <figure
+            key={i}
+            className="overflow-hidden rounded-md border bg-neutral-50"
+          >
+            <img src={t.src} alt={t.label} className="block h-24 w-full object-cover" />
+            <figcaption className="truncate px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+              {t.label}
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // Renders a health summary for a single equipment item (its checklist).
-export function HealthSummary({ item, title }) {
+// Photos (equipment / serial / issues) are rendered inside the same card so
+// the per-item summary stays as one cohesive block.
+export function HealthSummary({ item, title, showPhotos = true }) {
   const counts = gradeCounts(item?.checklist || {});
   const graded = counts.Good + counts["Acceptable - Has Wear"] + counts["Needs Replacement"];
   const total = graded + (counts.ungraded || 0);
@@ -156,6 +200,8 @@ export function HealthSummary({ item, title }) {
           </div>
         </div>
       </div>
+
+      {showPhotos && <PhotoStrip item={item} />}
     </div>
   );
 }
