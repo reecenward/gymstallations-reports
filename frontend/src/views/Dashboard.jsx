@@ -19,12 +19,12 @@ import { cn } from "@/lib/utils";
 
 function BrandMark() {
   return (
-    <div className="flex items-center gap-2.5">
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-lg font-black text-white shadow-sm">
+    <div className="flex items-center gap-3">
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-lg font-black text-primary-foreground">
         G
       </div>
       <div className="leading-tight">
-        <div className="text-xl font-extrabold tracking-tight text-navy">
+        <div className="text-lg font-bold tracking-tight text-navy">
           Gymstallations
         </div>
         <div className="text-xs text-muted-foreground">
@@ -123,17 +123,17 @@ export function Dashboard({ jobs, onNew, onView, onLogout, onManageUsers, user }
   const hasFilters = query || filter !== "all" || tech !== "all";
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6">
-      <div className="sticky top-0 z-20 -mx-4 bg-background/95 px-4 pb-3 pt-4 backdrop-blur sm:-mx-6 sm:px-6 sm:pt-6">
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mx-auto w-full max-w-4xl px-4 pb-12 sm:px-6">
+      <div className="sticky top-0 z-20 -mx-4 border-b border-transparent bg-background/95 px-4 pb-4 pt-4 backdrop-blur transition-colors sm:-mx-6 sm:px-6 sm:pt-6">
+        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <BrandMark />
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="flex flex-wrap items-center gap-2">
             {user && (
-              <span className="hidden text-sm text-muted-foreground sm:mr-2 sm:inline">
+              <span className="hidden rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-700 sm:inline-flex">
                 {user.full_name || user.email}
               </span>
             )}
-            <Button onClick={onNew} size="lg" className="w-full sm:w-auto">
+            <Button onClick={onNew} size="lg" className="flex-1 sm:flex-none">
               <Plus className="size-4" />
               New Report
             </Button>
@@ -142,10 +142,11 @@ export function Dashboard({ jobs, onNew, onView, onLogout, onManageUsers, user }
                 onClick={onManageUsers}
                 size="lg"
                 variant="outline"
-                className="w-full sm:w-auto"
+                aria-label="Manage users"
+                className="px-3"
               >
                 <Users className="size-4" />
-                Users
+                <span className="sr-only sm:not-sr-only">Users</span>
               </Button>
             )}
             {onLogout && (
@@ -153,10 +154,11 @@ export function Dashboard({ jobs, onNew, onView, onLogout, onManageUsers, user }
                 onClick={onLogout}
                 size="lg"
                 variant="outline"
-                className="w-full sm:w-auto"
+                aria-label="Sign out"
+                className="px-3"
               >
                 <LogOut className="size-4" />
-                Sign out
+                <span className="sr-only sm:not-sr-only">Sign out</span>
               </Button>
             )}
           </div>
@@ -220,52 +222,55 @@ export function Dashboard({ jobs, onNew, onView, onLogout, onManageUsers, user }
         )}
       </div>
 
-      <div className="mt-4">
+      <div className="mt-6">
         {jobs.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center px-6 py-16 text-center">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-neutral-100 text-neutral-900">
-                <ClipboardList className="size-7" strokeWidth={1.75} />
-              </div>
-              <div className="mb-2 text-xl font-bold text-navy">
-                No reports yet
-              </div>
-              <p className="mb-6 max-w-sm text-sm text-muted-foreground">
-                Tap <span className="font-semibold text-navy">New Report</span>{" "}
-                to create your first preventive maintenance report — it takes
-                about 3 minutes.
-              </p>
-              <Button onClick={onNew} size="lg">
-                <Plus className="size-4" />
-                Create First Report
-              </Button>
-            </CardContent>
-          </Card>
-        ) : filtered.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center px-6 py-12 text-center">
-              <Search className="mb-3 size-7 text-neutral-300" strokeWidth={1.75} />
-              <div className="mb-1 text-base font-bold text-navy">
-                Nothing matches
-              </div>
-              <p className="mb-4 max-w-sm text-sm text-muted-foreground">
-                Try a different search or clear the filters.
-              </p>
-              {hasFilters && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setQuery("");
-                    setFilter("all");
-                    setTech("all");
-                  }}
-                >
-                  Clear filters
+          <div className="mx-auto max-w-md">
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center px-6 py-12 text-center sm:py-14">
+                <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-neutral-100 text-neutral-900">
+                  <ClipboardList className="size-7" strokeWidth={1.75} />
+                </div>
+                <div className="mb-1.5 text-lg font-bold text-navy">
+                  No reports yet
+                </div>
+                <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
+                  Tap <span className="font-semibold text-navy">New Report</span>{" "}
+                  to log your first preventive maintenance visit. Takes about 3 minutes.
+                </p>
+                <Button onClick={onNew} size="lg" className="w-full">
+                  <Plus className="size-4" />
+                  Create First Report
                 </Button>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="mx-auto max-w-md">
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center px-6 py-10 text-center">
+                <Search className="mb-3 size-7 text-neutral-300" strokeWidth={1.75} />
+                <div className="mb-1 text-base font-bold text-navy">
+                  Nothing matches
+                </div>
+                <p className="mb-4 text-sm text-muted-foreground">
+                  Try a different search or clear the filters.
+                </p>
+                {hasFilters && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setQuery("");
+                      setFilter("all");
+                      setTech("all");
+                    }}
+                  >
+                    Clear filters
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         ) : (
           <div>
             <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
