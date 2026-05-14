@@ -3,10 +3,12 @@ import {
   AlertTriangle,
   ChevronRight,
   ClipboardList,
+  FileEdit,
   LogOut,
   Mail,
   Plus,
   Search,
+  Trash2,
   Users,
   X,
 } from "lucide-react";
@@ -15,7 +17,52 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { EquipmentIcon } from "@/components/EquipmentIcon";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { cn } from "@/lib/utils";
+
+const STEP_LABELS = ["Basics", "Inspection", "Notes"];
+
+function DraftResumeCard({ draft, step, onResume, onDiscard }) {
+  const label =
+    draft.clientName ||
+    [draft.brand, draft.model].filter(Boolean).join(" ") ||
+    draft.equipmentType ||
+    "Untitled draft";
+  const stepLabel = STEP_LABELS[step] || STEP_LABELS[0];
+
+  return (
+    <Card className="border-dashed border-neutral-300 bg-neutral-50">
+      <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md bg-white text-neutral-700 ring-1 ring-neutral-200">
+            <FileEdit className="size-4" strokeWidth={1.75} />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+              Pick up where you left off
+            </div>
+            <div className="mt-0.5 truncate text-sm font-semibold text-navy">
+              {label}
+            </div>
+            <div className="mt-0.5 text-xs text-muted-foreground">
+              On step {step + 1} of {STEP_LABELS.length} · {stepLabel}
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={onDiscard} aria-label="Discard draft">
+            <Trash2 className="size-4" />
+            <span className="sr-only sm:not-sr-only">Discard</span>
+          </Button>
+          <Button size="sm" onClick={onResume}>
+            Continue
+            <ChevronRight className="size-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 function BrandMark() {
   return (
@@ -69,10 +116,22 @@ function FilterChip({ active, onClick, children, icon: Icon, count }) {
   );
 }
 
-export function Dashboard({ jobs, onNew, onView, onLogout, onManageUsers, user }) {
+export function Dashboard({
+  jobs,
+  onNew,
+  onView,
+  onLogout,
+  onManageUsers,
+  user,
+  savedDraft,
+  savedDraftStep = 0,
+  onResumeDraft,
+  onDiscardDraft,
+}) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [tech, setTech] = useState("all");
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
 
   const techOptions = useMemo(() => {
     const seen = new Map();
@@ -222,7 +281,16 @@ export function Dashboard({ jobs, onNew, onView, onLogout, onManageUsers, user }
         )}
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 space-y-4">
+        {savedDraft && (
+          <DraftResumeCard
+            draft={savedDraft}
+            step={savedDraftStep}
+            onResume={onResumeDraft}
+            onDiscard={() => setConfirmDiscard(true)}
+          />
+        )}
+
         {jobs.length === 0 ? (
           <div className="mx-auto max-w-md">
             <Card className="border-dashed">
@@ -350,6 +418,19 @@ export function Dashboard({ jobs, onNew, onView, onLogout, onManageUsers, user }
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmDiscard}
+        title="Discard this draft?"
+        description="Anything you've entered so far will be permanently removed."
+        confirmLabel="Discard"
+        destructive
+        onConfirm={() => {
+          setConfirmDiscard(false);
+          onDiscardDraft?.();
+        }}
+        onCancel={() => setConfirmDiscard(false)}
+      />
     </div>
   );
 }

@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { ArrowLeft, ArrowRight, Check, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { StepBasics } from "@/views/steps/StepBasics";
 import { StepChecklist } from "@/views/steps/StepChecklist";
 import { StepFinish } from "@/views/steps/StepFinish";
@@ -20,6 +22,8 @@ export function FormView({
   onBack,
   onDiscard,
 }) {
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+
   const canNext = () => {
     if (step === 0) return !!draft.equipmentType && !!draft.clientName && !!draft.brand && !!draft.model;
     return true;
@@ -48,9 +52,7 @@ export function FormView({
         </div>
         {onDiscard && (
           <Button
-            onClick={() => {
-              if (confirm("Discard this draft? This can't be undone.")) onDiscard();
-            }}
+            onClick={() => setConfirmDiscard(true)}
             variant="ghost"
             size="icon"
             aria-label="Discard draft"
@@ -127,6 +129,19 @@ export function FormView({
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmDiscard}
+        title="Discard this draft?"
+        description="Anything you've entered so far will be permanently removed."
+        confirmLabel="Discard"
+        destructive
+        onConfirm={() => {
+          setConfirmDiscard(false);
+          onDiscard?.();
+        }}
+        onCancel={() => setConfirmDiscard(false)}
+      />
     </div>
   );
 }

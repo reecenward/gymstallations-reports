@@ -9,26 +9,32 @@ import { AdminUsersView } from "@/views/AdminUsersView";
 import { makeDraft, makeInitialChecklist } from "@/lib/equipment";
 import { api, getToken, clearToken } from "@/lib/api";
 
-const DRAFT_KEY = "gym_draft_v1";
+const DRAFT_KEY = "gym_draft_v2";
 
 function loadSavedDraft() {
   try {
     const raw = localStorage.getItem(DRAFT_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : null;
+    if (!parsed || typeof parsed !== "object") return null;
+    if (!parsed.draft) return null;
+    return { draft: parsed.draft, step: Number.isFinite(parsed.step) ? parsed.step : 0 };
   } catch {
     return null;
   }
 }
 
-function persistDraft(d) {
+function persistDraft(draft, step) {
+  const blob = { draft, step };
   try {
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(blob));
   } catch {
     // Most likely QuotaExceededError from a big base64 photo — retry without it.
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...d, serialPhoto: null }));
+      localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({ draft: { ...draft, serialPhoto: null }, step })
+      );
     } catch {
       /* give up silently */
     }
@@ -95,6 +101,10 @@ export default function App() {
   const [draft, setDraft] = useState(makeDraft);
   const [emailState, setEmailState] = useState("idle");
   const [viewingJob, setViewingJob] = useState(null);
+  const [savedDraft, setSavedDraft] = useState(() => {
+    const s = loadSavedDraft();
+    return s && isMeaningfulDraft(s.draft) ? s : null;
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -133,12 +143,15 @@ export default function App() {
     };
   }, [user]);
 
-  // Autosave the draft while the user is editing the form so a crash or
-  // accidental refresh doesn't wipe their work.
+  // Autosave the draft (and step) while the user is editing the form so a
+  // crash or accidental refresh doesn't wipe their work.
   useEffect(() => {
     if (view !== "form") return;
-    persistDraft(draft);
-  }, [draft, view]);
+    persistDraft(draft, step);
+    if (isMeaningfulDraft(draft)) {
+      setSavedDraft({ draft, step });
+    }
+  }, [draft, step, view]);
 
   const upd = (field, val) => setDraft((d) => ({ ...d, [field]: val }));
 
@@ -173,30 +186,46 @@ export default function App() {
       },
     }));
 
-  const startNew = () => {
-    const saved = loadSavedDraft();
-    if (isMeaningfulDraft(saved)) {
-      setDraft(saved);
-      toast.message("Resumed your in-progress draft");
-    } else {
-      setDraft({
-        ...makeDraft(),
-        technicianName: user?.full_name || user?.email || "",
-      });
-    }
+  const enterForm = (initialDraft, initialStep = 0, resumed = false) => {
+    setDraft(initialDraft);
+    setStep(initialStep);
     setEmailState("idle");
-    setStep(0);
     setViewingJob(null);
     setView("form");
+    if (resumed) toast.message("Resumed your in-progress draft");
+  };
+
+  const startNew = () => {
+    const saved = loadSavedDraft();
+    if (saved && isMeaningfulDraft(saved.draft)) {
+      enterForm(saved.draft, saved.step || 0, true);
+    } else {
+      enterForm(
+        { ...makeDraft(), technicianName: user?.full_name || user?.email || "" },
+        0
+      );
+    }
+  };
+
+  const resumeDraft = () => {
+    const saved = loadSavedDraft();
+    if (!saved || !isMeaningfulDraft(saved.draft)) {
+      toast.error("No draft to resume");
+      setSavedDraft(null);
+      return;
+    }
+    enterForm(saved.draft, saved.step || 0, true);
   };
 
   const discardDraft = () => {
     clearSavedDraft();
+    setSavedDraft(null);
     setDraft({
       ...makeDraft(),
       technicianName: user?.full_name || user?.email || "",
     });
     setStep(0);
+    setView("dashboard");
     toast.message("Draft discarded");
   };
 
@@ -215,6 +244,7 @@ export default function App() {
         emailStatus: res.email_status,
       };
       clearSavedDraft();
+      setSavedDraft(null);
       setJobs((prev) => [job, ...prev]);
       setViewingJob(job);
       setEmailState(res.email_status === "sent" ? "sent" : "failed");
@@ -293,6 +323,10 @@ export default function App() {
           onLogout={logout}
           onManageUsers={user.is_admin ? () => setView("users") : null}
           user={user}
+          savedDraft={savedDraft?.draft || null}
+          savedDraftStep={savedDraft?.step || 0}
+          onResumeDraft={resumeDraft}
+          onDiscardDraft={discardDraft}
         />
       )}
       {view === "users" && (
