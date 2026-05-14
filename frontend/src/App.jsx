@@ -8,6 +8,12 @@ import { LoginView } from "@/views/LoginView";
 import { AdminUsersView } from "@/views/AdminUsersView";
 import { makeDraft, makeInitialChecklist } from "@/lib/equipment";
 import { api, getToken, clearToken } from "@/lib/api";
+import {
+  DEMO_REPORT_ID,
+  demoJob,
+  isDemoDismissed,
+  setDemoDismissed,
+} from "@/lib/demo";
 
 const DRAFT_KEY = "gym_draft_v2";
 
@@ -105,6 +111,7 @@ export default function App() {
     const s = loadSavedDraft();
     return s && isMeaningfulDraft(s.draft) ? s : null;
   });
+  const [demoVisible, setDemoVisible] = useState(() => !isDemoDismissed());
 
   useEffect(() => {
     let cancelled = false;
@@ -263,6 +270,12 @@ export default function App() {
   };
 
   const openJob = async (job) => {
+    if (job?.id === DEMO_REPORT_ID) {
+      toast.message(
+        "This is a demo placeholder — submit a real report to see the full view."
+      );
+      return;
+    }
     try {
       const detail = await api.getReport(job.id);
       const full = jobFromServer(detail);
@@ -280,6 +293,13 @@ export default function App() {
       toast.error(err.message || "Failed to load report");
     }
   };
+
+  const dismissDemo = () => {
+    setDemoDismissed();
+    setDemoVisible(false);
+  };
+
+  const displayedJobs = demoVisible ? [demoJob, ...jobs] : jobs;
 
   const sendReport = () => {
     if (emailState === "sent") {
@@ -317,7 +337,7 @@ export default function App() {
     <>
       {view === "dashboard" && (
         <Dashboard
-          jobs={jobs}
+          jobs={displayedJobs}
           onNew={startNew}
           onView={openJob}
           onLogout={logout}
@@ -327,6 +347,7 @@ export default function App() {
           savedDraftStep={savedDraft?.step || 0}
           onResumeDraft={resumeDraft}
           onDiscardDraft={discardDraft}
+          onDismissDemo={dismissDemo}
         />
       )}
       {view === "users" && (

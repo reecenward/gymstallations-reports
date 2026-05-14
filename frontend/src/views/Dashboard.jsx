@@ -122,6 +122,7 @@ export function Dashboard({
   savedDraftStep = 0,
   onResumeDraft,
   onDiscardDraft,
+  onDismissDemo,
 }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
@@ -320,16 +321,27 @@ export function Dashboard({
               {filtered.map((job) => {
                 const replace = job.needsReplacementCount || 0;
                 const failed = job.emailStatus === "failed";
+                const isDemo = !!job.isDemo;
                 return (
                   <Card
                     key={job.id}
-                    className="cursor-pointer transition-shadow hover:shadow-md"
+                    className={cn(
+                      "cursor-pointer transition-shadow hover:shadow-md",
+                      isDemo && "border-dashed bg-neutral-50/60"
+                    )}
                     onClick={() => onView(job)}
                   >
                     <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-5">
                       <div className="min-w-0 flex-1">
-                        <div className="truncate text-base font-bold text-navy">
-                          {job.clientName || "Unnamed Client"}
+                        <div className="flex items-center gap-2">
+                          <div className="truncate text-base font-bold text-navy">
+                            {job.clientName || "Unnamed Client"}
+                          </div>
+                          {isDemo && (
+                            <span className="flex-shrink-0 rounded-full border border-neutral-300 bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-neutral-600">
+                              Demo
+                            </span>
+                          )}
                         </div>
                         <div className="mt-1 flex items-center gap-1.5 truncate text-sm text-muted-foreground">
                           <EquipmentIcon
@@ -370,18 +382,33 @@ export function Dashboard({
                           </div>
                         )}
                       </div>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="self-start sm:self-center"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onView(job);
-                        }}
-                      >
-                        Open
-                        <ChevronRight className="size-4" />
-                      </Button>
+                      <div className="flex items-center gap-2 self-start sm:self-center">
+                        {isDemo && onDismissDemo && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            aria-label="Dismiss demo"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDismissDemo();
+                            }}
+                          >
+                            <X className="size-4" />
+                            <span className="sr-only sm:not-sr-only">Dismiss</span>
+                          </Button>
+                        )}
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onView(job);
+                          }}
+                        >
+                          Open
+                          <ChevronRight className="size-4" />
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 );
