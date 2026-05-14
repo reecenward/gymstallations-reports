@@ -303,9 +303,11 @@ export default function App() {
 
   const openJob = async (job) => {
     if (job?.id === DEMO_REPORT_ID) {
-      toast.message(
-        "This is a demo placeholder — submit a real report to see the full view."
-      );
+      // The demo is rendered locally — no API call. It carries the full
+      // shape ReportView expects (items[], photos, review status, etc.).
+      setViewingJob(demoJob);
+      setEmailState("sent");
+      setView("report");
       return;
     }
     try {

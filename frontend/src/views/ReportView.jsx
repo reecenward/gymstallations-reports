@@ -17,6 +17,7 @@ import {
   EQUIPMENT_TYPES,
   GRADE_SHORT,
   GRADE_TW,
+  REPLACEMENT_GRADE,
   normalizeDraft,
 } from "@/lib/equipment";
 import { cn } from "@/lib/utils";
@@ -70,9 +71,24 @@ function InfoBlock({ label, value }) {
   );
 }
 
+function PhotoTile({ src, label, alt }) {
+  return (
+    <figure className="overflow-hidden rounded-lg border bg-neutral-50">
+      <img src={src} alt={alt} className="block h-44 w-full object-cover sm:h-56" />
+      <figcaption className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+        {label}
+      </figcaption>
+    </figure>
+  );
+}
+
 function ItemCard({ item, index }) {
   const checklistKeys =
     EQUIPMENT_TYPES[item.equipmentType] || Object.keys(item.checklist || {});
+
+  const issues = checklistKeys
+    .map((key) => ({ key, cell: item.checklist?.[key] }))
+    .filter(({ cell }) => cell && cell.grade === REPLACEMENT_GRADE);
 
   return (
     <Card className="overflow-hidden">
@@ -88,28 +104,83 @@ function ItemCard({ item, index }) {
             {item.equipmentType}
           </div>
         </div>
+        {issues.length > 0 && (
+          <span className="flex-shrink-0 rounded-full bg-red-100 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-red-700">
+            {issues.length} issue{issues.length === 1 ? "" : "s"}
+          </span>
+        )}
       </div>
 
       <CardContent className="space-y-5 p-4 sm:p-5">
-        <div className="grid gap-4 lg:grid-cols-2">
-          <ReportSection title="Equipment">
-            <InfoRow label="Brand / Model" value={`${item.brand || ""} ${item.model || ""}`.trim() || "—"} />
-            <InfoRow label="Serial #" value={item.serialNumber} />
-            <InfoRow label="Location" value={item.location} />
-          </ReportSection>
-          {item.distancePhoto && (
-            <div>
-              <SectionLabel>Photo</SectionLabel>
-              <img
-                src={item.distancePhoto}
-                alt={`${item.equipmentType} unit`}
-                className="block max-h-56 rounded-md border object-cover"
-              />
+        <ReportSection title="Equipment">
+          <InfoRow
+            label="Brand / Model"
+            value={`${item.brand || ""} ${item.model || ""}`.trim() || "—"}
+          />
+          <InfoRow label="Serial #" value={item.serialNumber} />
+          <InfoRow label="Location" value={item.location} />
+        </ReportSection>
+
+        {(item.distancePhoto || item.serialPhoto) && (
+          <div>
+            <SectionLabel>Photos</SectionLabel>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {item.distancePhoto && (
+                <PhotoTile
+                  src={item.distancePhoto}
+                  label="Equipment"
+                  alt={`${item.equipmentType} unit`}
+                />
+              )}
+              {item.serialPhoto && (
+                <PhotoTile
+                  src={item.serialPhoto}
+                  label="Serial number"
+                  alt="Serial number close-up"
+                />
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         <HealthSummary item={item} title="Condition" />
+
+        {issues.length > 0 && (
+          <div>
+            <SectionLabel>Issues Found</SectionLabel>
+            <div className="space-y-3">
+              {issues.map(({ key, cell }) => (
+                <div
+                  key={key}
+                  className="overflow-hidden rounded-lg border border-red-200 bg-red-50/40"
+                >
+                  <div className="flex flex-col gap-3 p-3 sm:flex-row">
+                    {cell.photo && (
+                      <img
+                        src={cell.photo}
+                        alt={`Issue: ${key}`}
+                        className="h-32 w-full flex-shrink-0 rounded border object-cover sm:h-28 sm:w-40"
+                      />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="text-sm font-bold text-navy">{key}</div>
+                        <span className={cn("flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider", GRADE_TW[REPLACEMENT_GRADE].solid)}>
+                          {GRADE_SHORT[REPLACEMENT_GRADE]}
+                        </span>
+                      </div>
+                      {cell.notes && (
+                        <div className="mt-1 text-sm text-neutral-700">
+                          {cell.notes}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div>
           <SectionLabel>Inspection Results</SectionLabel>
@@ -131,13 +202,6 @@ function ItemCard({ item, index }) {
                       <div className="mt-1 text-xs italic text-muted-foreground">
                         “{cell.notes}”
                       </div>
-                    )}
-                    {cell.photo && (
-                      <img
-                        src={cell.photo}
-                        alt="Issue"
-                        className="mt-2 block max-h-32 rounded border object-cover"
-                      />
                     )}
                   </div>
                   <span
