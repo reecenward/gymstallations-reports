@@ -4,12 +4,10 @@ import {
   ChevronRight,
   ClipboardList,
   FileEdit,
-  LogOut,
   Mail,
   Plus,
   Search,
   Trash2,
-  Users,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { EquipmentIcon } from "@/components/EquipmentIcon";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { AccountMenu } from "@/components/AccountMenu";
 import { cn } from "@/lib/utils";
 
 const STEP_LABELS = ["Basics", "Inspection", "Notes"];
@@ -183,43 +182,20 @@ export function Dashboard({
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 pb-12 sm:px-6">
-      <div className="sticky top-0 z-20 -mx-4 border-b border-transparent bg-background/95 px-4 pb-4 pt-4 backdrop-blur transition-colors sm:-mx-6 sm:px-6 sm:pt-6">
-        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="sticky top-0 z-20 -mx-4 border-b border-transparent bg-background/95 px-4 pb-4 pt-4 backdrop-blur sm:-mx-6 sm:px-6 sm:pt-6">
+        <div className="mb-5 flex items-center justify-between gap-3">
           <BrandMark />
-          <div className="flex flex-wrap items-center gap-2">
-            {user && (
-              <span className="hidden rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-700 sm:inline-flex">
-                {user.full_name || user.email}
-              </span>
-            )}
-            <Button onClick={onNew} size="lg" className="flex-1 sm:flex-none">
+          <div className="flex items-center gap-2">
+            <Button onClick={onNew} size="lg">
               <Plus className="size-4" />
-              New Report
+              <span className="hidden sm:inline">New Report</span>
+              <span className="sm:hidden">New</span>
             </Button>
-            {onManageUsers && (
-              <Button
-                onClick={onManageUsers}
-                size="lg"
-                variant="outline"
-                aria-label="Manage users"
-                className="px-3"
-              >
-                <Users className="size-4" />
-                <span className="sr-only sm:not-sr-only">Users</span>
-              </Button>
-            )}
-            {onLogout && (
-              <Button
-                onClick={onLogout}
-                size="lg"
-                variant="outline"
-                aria-label="Sign out"
-                className="px-3"
-              >
-                <LogOut className="size-4" />
-                <span className="sr-only sm:not-sr-only">Sign out</span>
-              </Button>
-            )}
+            <AccountMenu
+              user={user}
+              onManageUsers={onManageUsers}
+              onLogout={onLogout}
+            />
           </div>
         </div>
 
