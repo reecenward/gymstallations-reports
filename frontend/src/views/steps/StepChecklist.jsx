@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  Upload,
   X,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -80,13 +79,13 @@ function ReplacementPhoto({ value, onChange }) {
           <Camera className="size-5" />
         </div>
       )}
-      <div className="flex-1 text-[11px] font-semibold text-red-800">
-        Photo of issue required
+      <div className="flex-1 text-xs font-semibold text-red-800">
+        Add a photo of the problem
       </div>
-      <Button asChild variant="secondary" size="sm" disabled={busy}>
+      <Button asChild size="sm" disabled={busy}>
         <label className="cursor-pointer">
-          {busy ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
-          {busy ? "…" : value ? "Replace" : "Add"}
+          {busy ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
+          {busy ? "…" : value ? "Retake" : "Take photo"}
           <input
             type="file"
             accept="image/*"
@@ -98,7 +97,7 @@ function ReplacementPhoto({ value, onChange }) {
         </label>
       </Button>
       {value && !busy && (
-        <Button variant="ghost" size="icon" aria-label="Remove photo" onClick={() => onChange(null)}>
+        <Button variant="ghost" size="sm" onClick={() => onChange(null)}>
           <X className="size-4" />
         </Button>
       )}
@@ -151,11 +150,11 @@ function ChecklistRows({ item, updateItem }) {
                       });
                     }}
                     className={cn(
-                      "h-11 rounded-md border text-sm font-bold transition-colors",
+                      "h-12 rounded-md border-2 text-sm font-bold transition-colors",
                       "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                       sel
-                        ? `${gtw.solid} border-transparent`
-                        : `bg-white ${gtw.text} ${gtw.border} active:bg-slate-50`
+                        ? `${gtw.solid} border-transparent shadow-sm`
+                        : "bg-white text-neutral-600 border-neutral-200 active:bg-neutral-50"
                     )}
                   >
                     {GRADE_SHORT[g]}
@@ -198,7 +197,7 @@ export function StepChecklist({ draft, updateItem }) {
   if (items.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-slate-200 p-6 text-center text-sm text-muted-foreground">
-        Go back and add at least one piece of equipment.
+        Go back to the previous step and add a machine first.
       </div>
     );
   }
@@ -206,9 +205,9 @@ export function StepChecklist({ draft, updateItem }) {
   return (
     <div className="space-y-3">
       <div>
-        <div className="text-sm font-semibold text-navy">Inspect each item</div>
-        <p className="text-xs text-muted-foreground">
-          Rate every checklist row. Items needing replacement require a photo.
+        <h2 className="text-lg font-bold text-navy">Rate every machine</h2>
+        <p className="text-sm text-muted-foreground">
+          Tap a button for each row: Good, Worn, or Replace. If you pick Replace, snap a photo of the problem.
         </p>
       </div>
 

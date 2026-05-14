@@ -6,7 +6,7 @@ export function Field({ label, required, htmlFor, className, children }) {
     <div className={cn("space-y-1.5", className)}>
       <Label htmlFor={htmlFor}>
         {label}
-        {required && <span className="text-primary"> *</span>}
+        {required && <span className="text-destructive"> *</span>}
       </Label>
       {children}
     </div>

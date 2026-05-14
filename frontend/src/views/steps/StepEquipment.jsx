@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Camera, Loader2, Trash2, Upload, X } from "lucide-react";
+import { Camera, Loader2, Trash2, X } from "lucide-react";
 import { Field } from "@/components/Field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -39,10 +39,10 @@ function PhotoPicker({ value, onChange }) {
         </div>
       )}
       <div className="flex flex-wrap gap-2">
-        <Button asChild variant="secondary" size="sm" disabled={busy}>
+        <Button asChild size="sm" disabled={busy}>
           <label className="cursor-pointer">
-            {busy ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
-            {busy ? "Processing…" : value ? "Replace" : "Upload"}
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
+            {busy ? "Processing…" : value ? "Retake" : "Take photo"}
             <input
               type="file"
               accept="image/*"
@@ -76,10 +76,9 @@ export function StepEquipment({ draft, addItem, updateItem, removeItem }) {
   return (
     <div className="space-y-6">
       <div>
-        <div className="mb-1 text-sm font-semibold text-navy">Add equipment</div>
-        <p className="mb-3 text-xs text-muted-foreground">
-          Tap a type to add one. Add as many as you need — each one gets its own
-          rating in the next step.
+        <h2 className="mb-1 text-lg font-bold text-navy">What's on site?</h2>
+        <p className="mb-3 text-sm text-muted-foreground">
+          Tap a type to add one. You can add as many as you need.
         </p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           {Object.keys(EQUIPMENT_TYPES).map((type) => {
@@ -114,12 +113,12 @@ export function StepEquipment({ draft, addItem, updateItem, removeItem }) {
 
       {items.length === 0 ? (
         <div className="rounded-lg border border-dashed border-slate-200 p-6 text-center text-sm text-muted-foreground">
-          No equipment yet. Tap a type above to add one.
+          Tap a type above to add your first machine.
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            {items.length} item{items.length === 1 ? "" : "s"} on this report
+          <div className="text-sm font-semibold text-navy">
+            {items.length} machine{items.length === 1 ? "" : "s"} added
           </div>
           {items.map((it, idx) => (
             <div
@@ -136,11 +135,11 @@ export function StepEquipment({ draft, addItem, updateItem, removeItem }) {
                 </div>
                 <Button
                   variant="ghost"
-                  size="icon"
-                  aria-label="Remove item"
+                  size="sm"
                   onClick={() => removeItem(it.id)}
                 >
                   <Trash2 className="size-4" />
+                  Remove
                 </Button>
               </div>
 
@@ -163,7 +162,7 @@ export function StepEquipment({ draft, addItem, updateItem, removeItem }) {
                     placeholder="T5 Track+"
                   />
                 </Field>
-                <Field label="Serial Number" required htmlFor={`serial-${it.id}`}>
+                <Field label="Serial number" required htmlFor={`serial-${it.id}`}>
                   <Input
                     id={`serial-${it.id}`}
                     className="h-11 text-base"
@@ -171,9 +170,10 @@ export function StepEquipment({ draft, addItem, updateItem, removeItem }) {
                     onChange={(e) =>
                       updateItem(it.id, { serialNumber: e.target.value })
                     }
+                    placeholder="From the sticker on the machine"
                   />
                 </Field>
-                <Field label="Location" htmlFor={`loc-${it.id}`}>
+                <Field label="Where on the floor?" htmlFor={`loc-${it.id}`}>
                   <Input
                     id={`loc-${it.id}`}
                     className="h-11 text-base"
@@ -185,13 +185,13 @@ export function StepEquipment({ draft, addItem, updateItem, removeItem }) {
               </div>
 
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <Field label="Equipment Photo (full unit)" required>
+                <Field label="Photo of the whole machine" required>
                   <PhotoPicker
                     value={it.distancePhoto}
                     onChange={(v) => updateItem(it.id, { distancePhoto: v })}
                   />
                 </Field>
-                <Field label="Serial Number Photo" required>
+                <Field label="Photo of the serial number" required>
                   <PhotoPicker
                     value={it.serialPhoto}
                     onChange={(v) => updateItem(it.id, { serialPhoto: v })}
