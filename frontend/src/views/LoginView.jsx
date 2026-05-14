@@ -27,14 +27,15 @@ export function LoginView({ onAuthed }) {
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-4 py-10">
-      <div className="mb-6 text-center">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-xl font-black text-white shadow-sm">
-          G
-        </div>
-        <div className="text-2xl font-extrabold tracking-tight text-navy">
-          Gymstallations
-        </div>
-        <div className="text-sm text-muted-foreground">
+      <div className="mb-8 flex flex-col items-center">
+        <img
+          src="/logo.png"
+          alt="Gymstallations"
+          className="h-12 w-auto sm:h-14"
+          width={5171}
+          height={1156}
+        />
+        <div className="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
           Preventive Maintenance Reports
         </div>
       </div>

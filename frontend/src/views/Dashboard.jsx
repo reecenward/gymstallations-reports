@@ -65,19 +65,15 @@ function DraftResumeCard({ draft, step, onResume, onDiscard }) {
 
 function BrandMark() {
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-lg font-black text-primary-foreground">
-        G
-      </div>
-      <div className="leading-tight">
-        <div className="text-lg font-bold tracking-tight text-navy">
-          Gymstallations
-        </div>
-        <div className="text-xs text-muted-foreground">
-          Preventive Maintenance Reports
-        </div>
-      </div>
-    </div>
+    <a href="/" className="flex items-center" aria-label="Gymstallations home">
+      <img
+        src="/logo.png"
+        alt="Gymstallations"
+        className="h-9 w-auto sm:h-10"
+        width={5171}
+        height={1156}
+      />
+    </a>
   );
 }
 
