@@ -137,17 +137,7 @@ export const EQUIPMENT_TYPES = {
   ],
 };
 
-export const EQUIPMENT_ICONS = {
-  Treadmill: "🏃",
-  Elliptical: "🤸",
-  "Stair Climber": "🪜",
-  "Spin Bike": "🚴",
-  "Upright / Recumbent Bike": "🚲",
-  "All Cable Equipment": "🪢",
-  Rower: "🚣",
-  Skierg: "⛷️",
-  "Plate Loaded Equipment": "🏋️",
-};
+// Icon mapping lives in components/EquipmentIcon.jsx as lucide components.
 
 export const COMMERCIAL_LIFE_YEARS = 10;
 

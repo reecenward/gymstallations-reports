@@ -2,7 +2,8 @@ import { ClipboardList, Plus, ChevronRight, LogOut, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { EQUIPMENT_ICONS, gradeCounts } from "@/lib/equipment";
+import { EquipmentIcon } from "@/components/EquipmentIcon";
+import { gradeCounts } from "@/lib/equipment";
 
 function BrandMark() {
   return (
@@ -101,12 +102,15 @@ export function Dashboard({ jobs, onNew, onView, onLogout, onManageUsers, user }
                       <div className="truncate text-base font-bold text-navy">
                         {job.clientName || "Unnamed Client"}
                       </div>
-                      <div className="mt-1 truncate text-sm text-muted-foreground">
-                        <span className="mr-1">
-                          {EQUIPMENT_ICONS[job.equipmentType] || ""}
+                      <div className="mt-1 flex items-center gap-1.5 truncate text-sm text-muted-foreground">
+                        <EquipmentIcon
+                          type={job.equipmentType}
+                          className="size-4 shrink-0"
+                        />
+                        <span className="truncate">
+                          {job.equipmentType} · {job.brand} {job.model} ·{" "}
+                          {job.date} · #{job.jobNumber}
                         </span>
-                        {job.equipmentType} · {job.brand} {job.model} ·{" "}
-                        {job.date} · #{job.jobNumber}
                       </div>
                       {job.createdBy && (
                         <div className="mt-0.5 truncate text-xs text-muted-foreground">

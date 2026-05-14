@@ -3,7 +3,8 @@ import { Camera, ChevronDown, ChevronUp, Upload, X } from "lucide-react";
 import { Field } from "@/components/Field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { EQUIPMENT_TYPES, EQUIPMENT_ICONS } from "@/lib/equipment";
+import { EquipmentIcon } from "@/components/EquipmentIcon";
+import { EQUIPMENT_TYPES } from "@/lib/equipment";
 import { cn } from "@/lib/utils";
 
 export function StepBasics({ draft, upd, updEquipmentType }) {
@@ -37,8 +38,8 @@ export function StepBasics({ draft, upd, updEquipmentType }) {
                     : "border-slate-200 bg-white hover:border-primary/40"
                 )}
               >
-                <div className="text-2xl leading-none">{EQUIPMENT_ICONS[type] || "🏋️"}</div>
-                <div className="mt-1 text-xs font-semibold leading-tight text-navy">
+                <EquipmentIcon type={type} className="size-6" />
+                <div className="mt-1.5 text-xs font-semibold leading-tight text-navy">
                   {type}
                 </div>
               </button>

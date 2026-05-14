@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LifecycleBar } from "@/components/LifecycleBar";
 import { HealthSummary } from "@/components/HealthSummary";
+import { EquipmentIcon } from "@/components/EquipmentIcon";
 import {
   EQUIPMENT_TYPES,
-  EQUIPMENT_ICONS,
   GRADE_SHORT,
   GRADE_TW,
 } from "@/lib/equipment";
@@ -130,14 +130,19 @@ export function ReportView({ job, emailState, onSend, onBack, onPrint }) {
               <InfoRow label="Date" value={job.date} />
             </ReportSection>
             <ReportSection title="Equipment">
-              <InfoRow
-                label="Type"
-                value={
-                  job.equipmentType
-                    ? `${EQUIPMENT_ICONS[job.equipmentType] || ""} ${job.equipmentType}`.trim()
-                    : "—"
-                }
-              />
+              <div className="mb-2 flex items-baseline justify-between gap-3 text-sm">
+                <span className="flex-shrink-0 text-muted-foreground">Type</span>
+                <span className="flex items-center gap-1.5 text-right font-semibold text-navy-soft">
+                  {job.equipmentType ? (
+                    <>
+                      <EquipmentIcon type={job.equipmentType} className="size-4" />
+                      {job.equipmentType}
+                    </>
+                  ) : (
+                    "—"
+                  )}
+                </span>
+              </div>
               <InfoRow
                 label="Brand / Model"
                 value={`${job.brand} ${job.model}`.trim() || "—"}
