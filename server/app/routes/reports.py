@@ -13,6 +13,7 @@ from ..models import (
     SubmitReportResponse,
 )
 from ..security import get_current_user
+from ..storage import persist_photos
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -69,6 +70,10 @@ def submit_report(body: ReportSubmission, current=Depends(get_current_user)):
     payload = _normalize_payload(body.model_dump())
     primary = _primary_item(payload)
 
+    # Insert first so we have a report_id to namespace photo files under,
+    # then strip embedded base64 photos out to disk and overwrite the row
+    # with the URL-only version. The original (with base64) is still
+    # forwarded to the webhook so downstream services don't change.
     with connect() as conn:
         cur = conn.execute(
             """
@@ -82,11 +87,19 @@ def submit_report(body: ReportSubmission, current=Depends(get_current_user)):
                 body.clientName or None,
                 body.siteAddress or None,
                 primary.get("equipmentType") or None,
-                json.dumps(payload),
+                "{}",
             ),
         )
         conn.commit()
         report_id = cur.lastrowid
+
+        stored = persist_photos(report_id, payload)
+        conn.execute(
+            "UPDATE reports SET payload_json = ? WHERE id = ?",
+            (json.dumps(stored), report_id),
+        )
+        conn.commit()
+
         row = conn.execute(
             "SELECT submitted_at FROM reports WHERE id = ?", (report_id,)
         ).fetchone()
@@ -226,6 +239,9 @@ def update_report(report_id: int, body: ReportUpdate, current=Depends(get_curren
         args = []
         if body.payload is not None:
             payload = _normalize_payload(body.payload)
+            # Persist any newly-attached base64 photos to disk. Fields that
+            # are already URL strings pass through unchanged.
+            payload = persist_photos(report_id, payload)
             primary = _primary_item(payload)
             sets.append("payload_json = ?")
             args.append(json.dumps(payload))
