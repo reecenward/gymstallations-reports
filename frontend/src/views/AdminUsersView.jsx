@@ -38,7 +38,7 @@ export function AdminUsersView({ currentUser, onBack }) {
   const submitCreate = async (e) => {
     e.preventDefault();
     if (form.password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+      toast.error("Use a password with at least 6 characters.");
       return;
     }
     setBusy(true);
@@ -62,7 +62,7 @@ export function AdminUsersView({ currentUser, onBack }) {
   const togglePromote = async (u) => {
     try {
       await api.updateUser(u.id, { is_admin: !u.is_admin });
-      toast.success(`${u.email} is now ${!u.is_admin ? "an admin" : "a regular user"}`);
+      toast.success(`${u.email} is now ${!u.is_admin ? "an admin" : "no longer an admin"}`);
       refresh();
     } catch (err) {
       toast.error(err.message || "Failed to update user");
@@ -77,7 +77,7 @@ export function AdminUsersView({ currentUser, onBack }) {
   const submitResetPassword = async () => {
     if (!pwTarget) return;
     if (pwValue.length < 6) {
-      toast.error("Password must be at least 6 characters");
+      toast.error("Use a password with at least 6 characters.");
       return;
     }
     try {
@@ -201,11 +201,11 @@ export function AdminUsersView({ currentUser, onBack }) {
                     >
                       {u.is_admin ? (
                         <>
-                          <ShieldOff className="size-4" /> Demote
+                          <ShieldOff className="size-4" /> Remove admin
                         </>
                       ) : (
                         <>
-                          <ShieldCheck className="size-4" /> Promote
+                          <ShieldCheck className="size-4" /> Make admin
                         </>
                       )}
                     </Button>
