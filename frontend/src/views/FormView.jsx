@@ -10,7 +10,47 @@ import { StepFinish } from "@/views/steps/StepFinish";
 import { itemComplete } from "@/lib/equipment";
 import { cn } from "@/lib/utils";
 
-const STEPS = ["Site", "Equipment", "Inspection", "Notes"];
+const STEPS = [
+  { short: "Site", long: "Job site" },
+  { short: "Equipment", long: "Add equipment" },
+  { short: "Check", long: "Check each item" },
+  { short: "Send", long: "Review & send" },
+];
+
+function missingForStep(step, draft) {
+  const items = draft.items || [];
+  if (step === 0) {
+    const missing = [];
+    if (!draft.clientName) missing.push("Client");
+    if (!draft.siteAddress) missing.push("Site address");
+    if (!draft.technicianName) missing.push("Your name");
+    if (!draft.date) missing.push("Date");
+    if (!draft.jobNumber) missing.push("Job number");
+    return missing;
+  }
+  if (step === 1) {
+    if (items.length === 0) return ["Add at least one piece of equipment"];
+    const bad = items
+      .map((it, idx) => {
+        const m = [];
+        if (!it.brand) m.push("brand");
+        if (!it.model) m.push("model");
+        if (!it.serialNumber) m.push("serial #");
+        if (!it.distancePhoto) m.push("equipment photo");
+        if (!it.serialPhoto) m.push("serial photo");
+        return m.length ? `Item #${idx + 1}: ${m.join(", ")}` : null;
+      })
+      .filter(Boolean);
+    return bad;
+  }
+  if (step === 2) {
+    const bad = items
+      .map((it, idx) => (itemComplete(it) ? null : `Item #${idx + 1} not finished`))
+      .filter(Boolean);
+    return bad;
+  }
+  return [];
+}
 
 export function FormView({
   step,
@@ -27,66 +67,42 @@ export function FormView({
 }) {
   const [confirmDiscard, setConfirmDiscard] = useState(false);
 
-  const items = draft.items || [];
-
-  const canNext = () => {
-    if (step === 0) {
-      return !!(
-        draft.clientName &&
-        draft.siteAddress &&
-        draft.technicianName &&
-        draft.date &&
-        draft.jobNumber
-      );
-    }
-    if (step === 1) {
-      if (items.length === 0) return false;
-      return items.every(
-        (it) =>
-          it.brand &&
-          it.model &&
-          it.serialNumber &&
-          it.distancePhoto &&
-          it.serialPhoto
-      );
-    }
-    if (step === 2) {
-      return items.every(itemComplete);
-    }
-    return true;
-  };
-
+  const missing = missingForStep(step, draft);
+  const canNext = missing.length === 0;
   const isLast = step === STEPS.length - 1;
-  const title = editing ? "Edit Report" : "New Report";
+  const title = editing ? "Editing report" : `Step ${step + 1} of ${STEPS.length}: ${STEPS[step].long}`;
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-4 pb-28 pt-4 sm:px-6 sm:pt-6">
+    <div className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-4 pb-32 pt-4 sm:px-6 sm:pt-6">
       <div className="mb-4 flex items-center gap-3 no-print">
-        <Button onClick={onBack} variant="ghost" size="icon" aria-label="Back">
-          <ArrowLeft className="size-5" />
+        <Button onClick={onBack} variant="outline" size="sm">
+          <ArrowLeft className="size-4" />
+          Back
         </Button>
         <div className="min-w-0 flex-1">
           <div className="truncate text-base font-bold text-navy">{title}</div>
-          <div className="truncate text-xs text-muted-foreground">#{draft.jobNumber}</div>
+          {draft.jobNumber && (
+            <div className="truncate text-xs text-muted-foreground">#{draft.jobNumber}</div>
+          )}
         </div>
         {onDiscard && !editing && (
           <Button
             onClick={() => setConfirmDiscard(true)}
             variant="ghost"
-            size="icon"
-            aria-label="Discard draft"
+            size="sm"
           >
-            <Trash2 className="size-5" />
+            <Trash2 className="size-4" />
+            Throw away
           </Button>
         )}
       </div>
 
       <div className="mb-5 flex gap-1.5 no-print">
-        {STEPS.map((label, i) => (
-          <div key={label} className="flex-1">
+        {STEPS.map((s, i) => (
+          <div key={s.short} className="flex-1">
             <div
               className={cn(
-                "h-1.5 rounded-full transition-colors",
+                "h-2 rounded-full transition-colors",
                 i <= step ? "bg-primary" : "bg-slate-200"
               )}
             />
@@ -96,7 +112,7 @@ export function FormView({
                 i === step ? "text-primary" : "text-muted-foreground"
               )}
             >
-              {label}
+              {s.short}
             </div>
           </div>
         ))}
@@ -119,41 +135,54 @@ export function FormView({
       </Card>
 
       <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 backdrop-blur no-print pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3 sm:px-6">
-          <Button
-            onClick={() => setStep((s) => s - 1)}
-            disabled={step === 0}
-            variant="outline"
-            size="lg"
-            className="flex-1"
-          >
-            <ArrowLeft className="size-4" />
-            Back
-          </Button>
-          {isLast ? (
-            <Button onClick={onSubmit} variant="success" size="lg" className="flex-1">
-              <Check className="size-4" />
-              {editing ? "Save" : "Submit"}
-            </Button>
-          ) : (
+        <div className="mx-auto max-w-2xl px-4 py-3 sm:px-6">
+          {!canNext && !isLast && missing.length > 0 && (
+            <div className="mb-2 rounded-md border border-warn bg-warn/10 px-3 py-2 text-xs font-semibold text-warn-foreground">
+              <div className="mb-0.5 font-bold">Please fill in:</div>
+              <ul className="list-disc pl-4 leading-tight">
+                {missing.slice(0, 4).map((m) => (
+                  <li key={m}>{m}</li>
+                ))}
+                {missing.length > 4 && <li>and {missing.length - 4} more</li>}
+              </ul>
+            </div>
+          )}
+          <div className="flex items-center gap-3">
             <Button
-              onClick={() => setStep((s) => s + 1)}
-              disabled={!canNext()}
+              onClick={() => setStep((s) => s - 1)}
+              disabled={step === 0}
+              variant="outline"
               size="lg"
               className="flex-1"
             >
-              Next
-              <ArrowRight className="size-4" />
+              <ArrowLeft className="size-4" />
+              Back
             </Button>
-          )}
+            {isLast ? (
+              <Button onClick={onSubmit} size="xl" className="flex-[2] text-base">
+                <Check className="size-5" />
+                {editing ? "Save changes" : "Send Report"}
+              </Button>
+            ) : (
+              <Button
+                onClick={() => setStep((s) => s + 1)}
+                disabled={!canNext}
+                size="xl"
+                className="flex-[2] text-base"
+              >
+                Next
+                <ArrowRight className="size-5" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
       <ConfirmDialog
         open={confirmDiscard}
-        title="Discard this draft?"
-        description="Anything you've entered so far will be permanently removed."
-        confirmLabel="Discard"
+        title="Throw this away?"
+        description="Everything you've entered so far will be deleted. You can't undo this."
+        confirmLabel="Throw away"
         destructive
         onConfirm={() => {
           setConfirmDiscard(false);
