@@ -196,62 +196,61 @@ export function Dashboard({
           </div>
         </div>
 
-        {jobs.length > 0 && (
-          <div className="space-y-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-neutral-400" />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search client, job #, brand, serial…"
-                className="h-11 pl-9 text-base"
-              />
-              {query && (
-                <button
-                  type="button"
-                  onClick={() => setQuery("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-neutral-400 hover:text-neutral-700"
-                  aria-label="Clear search"
-                >
-                  <X className="size-4" />
-                </button>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {FILTERS.map((f) => (
-                <FilterChip
-                  key={f.id}
-                  icon={f.icon}
-                  active={filter === f.id}
-                  onClick={() => setFilter(f.id)}
-                  count={
-                    f.id === "replace"
-                      ? counts.replace
-                      : f.id === "failed"
-                      ? counts.failed
-                      : jobs.length
-                  }
-                >
-                  {f.label}
-                </FilterChip>
-              ))}
-              {isAdmin && techOptions.length > 1 && (
-                <select
-                  value={tech}
-                  onChange={(e) => setTech(e.target.value)}
-                  className="h-8 rounded-full border border-neutral-200 bg-white px-3 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <option value="all">All technicians</option>
-                  {techOptions.map((t) => (
-                    <option key={t.email} value={t.email}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
+        <div className="space-y-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-neutral-400" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search client, job #, brand, serial…"
+              className="h-11 pl-9 text-base"
+              disabled={jobs.length === 0}
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-neutral-400 hover:text-neutral-700"
+                aria-label="Clear search"
+              >
+                <X className="size-4" />
+              </button>
+            )}
           </div>
-        )}
+          <div className="flex flex-wrap gap-1.5">
+            {FILTERS.map((f) => (
+              <FilterChip
+                key={f.id}
+                icon={f.icon}
+                active={filter === f.id}
+                onClick={() => setFilter(f.id)}
+                count={
+                  f.id === "replace"
+                    ? counts.replace
+                    : f.id === "failed"
+                    ? counts.failed
+                    : jobs.length
+                }
+              >
+                {f.label}
+              </FilterChip>
+            ))}
+            {isAdmin && techOptions.length > 1 && (
+              <select
+                value={tech}
+                onChange={(e) => setTech(e.target.value)}
+                className="h-8 rounded-full border border-neutral-200 bg-white px-3 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="all">All technicians</option>
+                {techOptions.map((t) => (
+                  <option key={t.email} value={t.email}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="mt-6 space-y-4">
