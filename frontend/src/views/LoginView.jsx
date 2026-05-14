@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,56 +27,80 @@ export function LoginView({ onAuthed }) {
   };
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-4 py-10">
-      <div className="mb-8 flex flex-col items-center">
-        <img
-          src="/logo.png"
-          alt="Gymstallations"
-          className="h-12 w-auto sm:h-14"
-          width={5171}
-          height={1156}
-        />
-        <div className="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          Preventive Maintenance Reports
-        </div>
-      </div>
+    <div className="flex min-h-dvh flex-col bg-neutral-50">
+      <div className="flex flex-1 items-center justify-center px-4 py-10">
+        <div className="w-full max-w-sm">
+          <div className="mb-6 flex flex-col items-center">
+            <img
+              src="/logo.png"
+              alt="Gymstallations"
+              className="h-10 w-auto sm:h-12"
+              width={5171}
+              height={1156}
+            />
+            <div className="mt-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-neutral-500">
+              Preventive Maintenance Reports
+            </div>
+          </div>
 
-      <Card>
-        <CardContent className="p-6">
-          <h1 className="mb-4 text-lg font-bold text-navy">Sign in</h1>
-          <form className="space-y-4" onSubmit={submit}>
-            <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={busy}>
-              {busy ? "Please wait…" : "Sign in"}
-            </Button>
-          </form>
-          <p className="mt-4 text-center text-xs text-muted-foreground">
+          <Card className="shadow-sm">
+            <CardContent className="p-6 sm:p-7">
+              <h1 className="mb-1 text-xl font-bold tracking-tight text-navy">
+                Sign in
+              </h1>
+              <p className="mb-5 text-sm text-muted-foreground">
+                Enter your work email to access the reports app.
+              </p>
+              <form className="space-y-4" onSubmit={submit}>
+                <div className="space-y-1.5">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
+                    className="h-11 text-base"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    required
+                    minLength={6}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                    className="h-11 text-base"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="mt-1 w-full"
+                  disabled={busy}
+                >
+                  {busy ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      Signing in…
+                    </>
+                  ) : (
+                    "Sign in"
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          <p className="mt-5 text-center text-xs text-muted-foreground">
             Accounts are created by the administrator.
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
