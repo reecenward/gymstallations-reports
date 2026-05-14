@@ -1,21 +1,31 @@
 import { useState } from "react";
-import { Camera, ChevronDown, ChevronUp, Upload, X } from "lucide-react";
+import { toast } from "sonner";
+import { Camera, ChevronDown, ChevronUp, Loader2, Upload, X } from "lucide-react";
 import { Field } from "@/components/Field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { EquipmentIcon } from "@/components/EquipmentIcon";
 import { EQUIPMENT_TYPES } from "@/lib/equipment";
+import { compressImage } from "@/lib/image";
 import { cn } from "@/lib/utils";
 
 export function StepBasics({ draft, upd, updEquipmentType }) {
   const [showMore, setShowMore] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
 
-  const onPhotoChange = (e) => {
+  const onPhotoChange = async (e) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => upd("serialPhoto", reader.result);
-    reader.readAsDataURL(file);
+    setPhotoBusy(true);
+    try {
+      const dataUrl = await compressImage(file);
+      upd("serialPhoto", dataUrl);
+    } catch (err) {
+      toast.error(err.message || "Couldn't process that photo");
+    } finally {
+      setPhotoBusy(false);
+    }
   };
 
   return (
@@ -190,20 +200,29 @@ export function StepBasics({ draft, upd, updEquipmentType }) {
                   </div>
                 )}
                 <div className="flex flex-wrap gap-2">
-                  <Button asChild variant="secondary" size="sm">
+                  <Button asChild variant="secondary" size="sm" disabled={photoBusy}>
                     <label className="cursor-pointer">
-                      <Upload className="size-4" />
-                      {draft.serialPhoto ? "Replace" : "Upload"}
+                      {photoBusy ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Upload className="size-4" />
+                      )}
+                      {photoBusy
+                        ? "Processing…"
+                        : draft.serialPhoto
+                        ? "Replace"
+                        : "Upload"}
                       <input
                         type="file"
                         accept="image/*"
                         capture="environment"
                         onChange={onPhotoChange}
                         className="hidden"
+                        disabled={photoBusy}
                       />
                     </label>
                   </Button>
-                  {draft.serialPhoto && (
+                  {draft.serialPhoto && !photoBusy && (
                     <Button
                       variant="outline"
                       size="sm"

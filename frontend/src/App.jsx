@@ -9,6 +9,48 @@ import { AdminUsersView } from "@/views/AdminUsersView";
 import { makeDraft, makeInitialChecklist } from "@/lib/equipment";
 import { api, getToken, clearToken } from "@/lib/api";
 
+const DRAFT_KEY = "gym_draft_v1";
+
+function loadSavedDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistDraft(d) {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+  } catch {
+    // Most likely QuotaExceededError from a big base64 photo — retry without it.
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...d, serialPhoto: null }));
+    } catch {
+      /* give up silently */
+    }
+  }
+}
+
+function clearSavedDraft() {
+  try {
+    localStorage.removeItem(DRAFT_KEY);
+  } catch {
+    /* noop */
+  }
+}
+
+function isMeaningfulDraft(d) {
+  if (!d) return false;
+  if (d.clientName || d.brand || d.model || d.equipmentType) return true;
+  if (d.issuesFound || d.partsReplaced || d.recommendations) return true;
+  if (d.serialPhoto) return true;
+  return Object.values(d.checklist || {}).some((c) => c && c.grade);
+}
+
 function creatorLabel(emailOrName, name) {
   return name || emailOrName || null;
 }
@@ -22,6 +64,7 @@ function jobFromServer(detail) {
     emailStatus: detail.email_status,
     createdBy: creatorLabel(detail.created_by_email, detail.created_by_name),
     createdByEmail: detail.created_by_email || null,
+    needsReplacementCount: detail.needs_replacement_count || 0,
   };
 }
 
@@ -31,13 +74,14 @@ function summaryToJob(s) {
     jobNumber: s.job_number,
     clientName: s.client_name || "",
     equipmentType: s.equipment_type || "",
-    brand: "",
-    model: "",
+    brand: s.brand || "",
+    model: s.model || "",
     date: (s.submitted_at || "").slice(0, 10),
     submittedAt: s.submitted_at,
     emailStatus: s.email_status,
     createdBy: creatorLabel(s.created_by_email, s.created_by_name),
     createdByEmail: s.created_by_email || null,
+    needsReplacementCount: s.needs_replacement_count || 0,
     checklist: {},
   };
 }
@@ -89,6 +133,13 @@ export default function App() {
     };
   }, [user]);
 
+  // Autosave the draft while the user is editing the form so a crash or
+  // accidental refresh doesn't wipe their work.
+  useEffect(() => {
+    if (view !== "form") return;
+    persistDraft(draft);
+  }, [draft, view]);
+
   const upd = (field, val) => setDraft((d) => ({ ...d, [field]: val }));
 
   const updEquipmentType = (type) =>
@@ -123,14 +174,30 @@ export default function App() {
     }));
 
   const startNew = () => {
-    setDraft({
-      ...makeDraft(),
-      technicianName: user?.full_name || user?.email || "",
-    });
+    const saved = loadSavedDraft();
+    if (isMeaningfulDraft(saved)) {
+      setDraft(saved);
+      toast.message("Resumed your in-progress draft");
+    } else {
+      setDraft({
+        ...makeDraft(),
+        technicianName: user?.full_name || user?.email || "",
+      });
+    }
     setEmailState("idle");
     setStep(0);
     setViewingJob(null);
     setView("form");
+  };
+
+  const discardDraft = () => {
+    clearSavedDraft();
+    setDraft({
+      ...makeDraft(),
+      technicianName: user?.full_name || user?.email || "",
+    });
+    setStep(0);
+    toast.message("Draft discarded");
   };
 
   const submitReport = async () => {
@@ -147,6 +214,7 @@ export default function App() {
         submittedAt: res.submitted_at,
         emailStatus: res.email_status,
       };
+      clearSavedDraft();
       setJobs((prev) => [job, ...prev]);
       setViewingJob(job);
       setEmailState(res.email_status === "sent" ? "sent" : "failed");
@@ -241,6 +309,7 @@ export default function App() {
           updChecklistNotes={updChecklistNotes}
           onSubmit={submitReport}
           onBack={() => setView("dashboard")}
+          onDiscard={discardDraft}
         />
       )}
       {view === "report" && (

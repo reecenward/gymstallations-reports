@@ -72,6 +72,9 @@ class ReportSummary(BaseModel):
     equipment_type: Optional[str]
     submitted_at: str
     email_status: str
+    brand: Optional[str] = None
+    model: Optional[str] = None
+    needs_replacement_count: int = 0
     created_by_email: Optional[str] = None
     created_by_name: Optional[str] = None
 

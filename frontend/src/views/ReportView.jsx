@@ -21,7 +21,7 @@ function SectionLabel({ children }) {
 
 function ReportSection({ title, children }) {
   return (
-    <div className="rounded-lg bg-slate-50 p-4 sm:p-5">
+    <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4 sm:p-5">
       <div className="mb-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
         {title}
       </div>
@@ -32,9 +32,11 @@ function ReportSection({ title, children }) {
 
 function InfoRow({ label, value }) {
   return (
-    <div className="mb-2 flex items-baseline justify-between gap-3 text-sm last:mb-0">
-      <span className="flex-shrink-0 text-muted-foreground">{label}</span>
-      <span className="text-right font-semibold text-navy-soft">
+    <div className="mb-2.5 flex flex-col gap-0.5 text-sm last:mb-0 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
+      <span className="flex-shrink-0 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm sm:font-normal sm:normal-case sm:tracking-normal">
+        {label}
+      </span>
+      <span className="break-words font-semibold text-navy-soft sm:text-right">
         {value || "—"}
       </span>
     </div>
@@ -121,8 +123,8 @@ export function ReportView({ job, emailState, onSend, onBack, onPrint }) {
           </div>
         </div>
 
-        <CardContent className="space-y-7 p-5 sm:p-7">
-          <div className="grid gap-4 md:grid-cols-2">
+        <CardContent className="space-y-5 p-4 sm:space-y-7 sm:p-7">
+          <div className="grid gap-4 lg:grid-cols-2">
             <ReportSection title="Job Details">
               <InfoRow label="Client" value={job.clientName} />
               <InfoRow label="Site" value={job.siteAddress} />
@@ -130,9 +132,11 @@ export function ReportView({ job, emailState, onSend, onBack, onPrint }) {
               <InfoRow label="Date" value={job.date} />
             </ReportSection>
             <ReportSection title="Equipment">
-              <div className="mb-2 flex items-baseline justify-between gap-3 text-sm">
-                <span className="flex-shrink-0 text-muted-foreground">Type</span>
-                <span className="flex items-center gap-1.5 text-right font-semibold text-navy-soft">
+              <div className="mb-2.5 flex flex-col gap-0.5 text-sm sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
+                <span className="flex-shrink-0 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm sm:font-normal sm:normal-case sm:tracking-normal">
+                  Type
+                </span>
+                <span className="flex items-center gap-1.5 font-semibold text-navy-soft sm:justify-end">
                   {job.equipmentType ? (
                     <>
                       <EquipmentIcon type={job.equipmentType} className="size-4" />

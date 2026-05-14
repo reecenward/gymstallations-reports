@@ -56,12 +56,26 @@ def submit_report(body: ReportSubmission, current=Depends(get_current_user)):
 
 _SUMMARY_COLUMNS = """
     r.id, r.job_number, r.client_name, r.equipment_type,
-    r.submitted_at, r.email_status,
+    r.submitted_at, r.email_status, r.payload_json,
     u.email AS created_by_email, u.full_name AS created_by_name
 """
 
 
 def _row_to_summary(r) -> ReportSummary:
+    brand = None
+    model = None
+    needs_replacement = 0
+    if r["payload_json"]:
+        try:
+            payload = json.loads(r["payload_json"])
+            brand = payload.get("brand") or None
+            model = payload.get("model") or None
+            checklist = payload.get("checklist") or {}
+            needs_replacement = sum(
+                1 for c in checklist.values() if isinstance(c, dict) and c.get("grade") == "Needs Replacement"
+            )
+        except (json.JSONDecodeError, AttributeError):
+            pass
     return ReportSummary(
         id=r["id"],
         job_number=r["job_number"],
@@ -69,6 +83,9 @@ def _row_to_summary(r) -> ReportSummary:
         equipment_type=r["equipment_type"],
         submitted_at=r["submitted_at"],
         email_status=r["email_status"],
+        brand=brand,
+        model=model,
+        needs_replacement_count=needs_replacement,
         created_by_email=r["created_by_email"],
         created_by_name=r["created_by_name"],
     )
@@ -105,7 +122,7 @@ def get_report(report_id: int, current=Depends(get_current_user)):
         if is_admin:
             row = conn.execute(
                 f"""
-                SELECT {_SUMMARY_COLUMNS}, r.email_error, r.payload_json
+                SELECT {_SUMMARY_COLUMNS}, r.email_error
                 FROM reports r LEFT JOIN users u ON u.id = r.user_id
                 WHERE r.id = ?
                 """,
@@ -114,7 +131,7 @@ def get_report(report_id: int, current=Depends(get_current_user)):
         else:
             row = conn.execute(
                 f"""
-                SELECT {_SUMMARY_COLUMNS}, r.email_error, r.payload_json
+                SELECT {_SUMMARY_COLUMNS}, r.email_error
                 FROM reports r LEFT JOIN users u ON u.id = r.user_id
                 WHERE r.id = ? AND r.user_id = ?
                 """,

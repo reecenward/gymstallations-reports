@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StepBasics } from "@/views/steps/StepBasics";
@@ -18,6 +18,7 @@ export function FormView({
   updChecklistNotes,
   onSubmit,
   onBack,
+  onDiscard,
 }) {
   const canNext = () => {
     if (step === 0) return !!draft.equipmentType && !!draft.clientName && !!draft.brand && !!draft.model;
@@ -45,6 +46,18 @@ export function FormView({
             #{draft.jobNumber}
           </div>
         </div>
+        {onDiscard && (
+          <Button
+            onClick={() => {
+              if (confirm("Discard this draft? This can't be undone.")) onDiscard();
+            }}
+            variant="ghost"
+            size="icon"
+            aria-label="Discard draft"
+          >
+            <Trash2 className="size-5" />
+          </Button>
+        )}
       </div>
 
       <div className="mb-5 flex gap-1.5 no-print">
