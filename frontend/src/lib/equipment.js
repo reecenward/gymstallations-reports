@@ -12,36 +12,39 @@ export const GRADE_SHORT = {
   "Needs Replacement": "Replace",
 };
 
+// Grades keep semantic color (green → amber → red) because that's the
+// universal "good / bad" language at a glance. The rest of the UI stays
+// monochrome — color is reserved for status, not decoration.
 export const GRADE_COLORS = {
-  Excellent: { fg: "#0a0a0a", bg: "#f5f5f5", border: "#0a0a0a", hex: "#0a0a0a" },
-  Good: { fg: "#262626", bg: "#f5f5f5", border: "#404040", hex: "#404040" },
-  "Acceptable - Has Wear": { fg: "#525252", bg: "#fafafa", border: "#a3a3a3", hex: "#a3a3a3" },
-  "Needs Replacement": { fg: "#b91c1c", bg: "#fef2f2", border: "#fecaca", hex: "#dc2626" },
+  Excellent: { fg: "#15803d", bg: "#dcfce7", border: "#86efac", hex: "#16a34a" },
+  Good: { fg: "#166534", bg: "#ecfdf5", border: "#a7f3d0", hex: "#65a30d" },
+  "Acceptable - Has Wear": { fg: "#a16207", bg: "#fef3c7", border: "#fde68a", hex: "#f59e0b" },
+  "Needs Replacement": { fg: "#b91c1c", bg: "#fee2e2", border: "#fca5a5", hex: "#dc2626" },
 };
 
 export const GRADE_TW = {
   Excellent: {
-    text: "text-neutral-900",
-    bg: "bg-neutral-100",
-    border: "border-neutral-900",
-    solid: "bg-neutral-900 text-white",
+    text: "text-emerald-700",
+    bg: "bg-emerald-50",
+    border: "border-emerald-200",
+    solid: "bg-emerald-600 text-white",
   },
   Good: {
-    text: "text-neutral-800",
-    bg: "bg-neutral-100",
-    border: "border-neutral-500",
-    solid: "bg-neutral-700 text-white",
+    text: "text-lime-700",
+    bg: "bg-lime-50",
+    border: "border-lime-200",
+    solid: "bg-lime-600 text-white",
   },
   "Acceptable - Has Wear": {
-    text: "text-neutral-600",
-    bg: "bg-neutral-50",
-    border: "border-neutral-300",
-    solid: "bg-neutral-400 text-white",
+    text: "text-amber-700",
+    bg: "bg-amber-50",
+    border: "border-amber-200",
+    solid: "bg-amber-500 text-white",
   },
   "Needs Replacement": {
     text: "text-red-700",
     bg: "bg-red-50",
-    border: "border-red-300",
+    border: "border-red-200",
     solid: "bg-red-600 text-white",
   },
 };
