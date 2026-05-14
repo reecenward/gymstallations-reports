@@ -1,6 +1,41 @@
 import { Field } from "@/components/Field";
 import { Textarea } from "@/components/ui/textarea";
 import { HealthSummary } from "@/components/HealthSummary";
+import { REPLACEMENT_GRADE } from "@/lib/equipment";
+
+function PhotoThumb({ src, label }) {
+  return (
+    <figure className="overflow-hidden rounded-md border bg-neutral-50">
+      <img src={src} alt={label} className="block h-28 w-full object-cover" />
+      <figcaption className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+        {label}
+      </figcaption>
+    </figure>
+  );
+}
+
+function ItemPhotos({ item }) {
+  const issueCells = Object.entries(item.checklist || {}).filter(
+    ([, c]) => c && c.grade === REPLACEMENT_GRADE && c.photo
+  );
+  const hasAny = item.distancePhoto || item.serialPhoto || issueCells.length > 0;
+  if (!hasAny) return null;
+
+  return (
+    <div className="space-y-2">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        Photos
+      </div>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {item.distancePhoto && <PhotoThumb src={item.distancePhoto} label="Equipment" />}
+        {item.serialPhoto && <PhotoThumb src={item.serialPhoto} label="Serial #" />}
+        {issueCells.map(([label, cell]) => (
+          <PhotoThumb key={label} src={cell.photo} label={`Issue · ${label}`} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function StepFinish({ draft, upd }) {
   const items = draft.items || [];
@@ -12,11 +47,10 @@ export function StepFinish({ draft, upd }) {
             Per-item summary
           </div>
           {items.map((it, idx) => (
-            <HealthSummary
-              key={it.id}
-              item={it}
-              title={`#${idx + 1} · ${it.equipmentType}`}
-            />
+            <div key={it.id} className="space-y-3">
+              <HealthSummary item={it} title={`#${idx + 1} · ${it.equipmentType}`} />
+              <ItemPhotos item={it} />
+            </div>
           ))}
         </div>
       )}
