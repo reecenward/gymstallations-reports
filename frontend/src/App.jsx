@@ -172,7 +172,7 @@ export default function App() {
         const list = await api.listReports();
         if (!cancelled) setJobs(list.map(summaryToJob));
       } catch (err) {
-        toast.error(err.message || "Failed to load reports");
+        toast.error(err.message || "Couldn't load your reports. Check your connection.");
       }
     })();
     return () => {
@@ -213,7 +213,7 @@ export default function App() {
     setViewingJob(null);
     setEditingId(null);
     setView("form");
-    if (resumed) toast.message("Resumed your in-progress draft");
+    if (resumed) toast.message("Picked up your saved report.");
   };
 
   const startNew = () => {
@@ -231,7 +231,7 @@ export default function App() {
   const resumeDraft = () => {
     const saved = loadSavedDraft();
     if (!saved || !isMeaningfulDraft(saved.draft)) {
-      toast.error("No draft to resume");
+      toast.error("Nothing saved to pick up.");
       setSavedDraft(null);
       return;
     }
@@ -247,7 +247,7 @@ export default function App() {
     });
     setStep(0);
     setView("dashboard");
-    toast.message("Draft discarded");
+    toast.message("Saved report thrown away.");
   };
 
   const enterEdit = (job) => {
@@ -273,16 +273,14 @@ export default function App() {
       setViewingJob(job);
       setEmailState(res.email_status === "sent" ? "sent" : "failed");
       if (res.email_status === "sent") {
-        toast.success("Report saved and emailed to client");
+        toast.success("Sent. The client got an email copy.");
       } else {
-        toast.error(
-          `Report saved, but email failed: ${res.email_error || "unknown error"}`
-        );
+        toast.error("Saved, but the email didn't go through. You can try again on the next screen.");
       }
       setView("report");
     } catch (err) {
       setEmailState("idle");
-      toast.error(err.message || "Failed to submit report");
+      toast.error("Couldn't send the report. Check your connection and try again.");
     }
   };
 
@@ -295,9 +293,9 @@ export default function App() {
       setViewingJob(full);
       setEditingId(null);
       setView("report");
-      toast.success("Report updated");
+      toast.success("Changes saved.");
     } catch (err) {
-      toast.error(err.message || "Failed to update report");
+      toast.error("Couldn't save changes. Try again.");
     }
   };
 
@@ -323,7 +321,7 @@ export default function App() {
       );
       setView("report");
     } catch (err) {
-      toast.error(err.message || "Failed to load report");
+      toast.error("Couldn't open that report.");
     }
   };
 
@@ -335,13 +333,13 @@ export default function App() {
       setViewingJob(full);
       setJobs((prev) => prev.map((j) => (j.id === full.id ? { ...j, ...full } : j)));
       const labels = {
-        reviewed: "Marked as reviewed",
-        sent_to_client: "Marked as sent to client",
-        pending: "Reset to pending",
+        reviewed: "Marked as reviewed.",
+        sent_to_client: "Marked as sent to client.",
+        pending: "Back to needs review.",
       };
-      toast.success(labels[status] || "Status updated");
+      toast.success(labels[status] || "Status updated.");
     } catch (err) {
-      toast.error(err.message || "Failed to update status");
+      toast.error("Couldn't change the status. Try again.");
     }
   };
 
@@ -354,9 +352,9 @@ export default function App() {
 
   const sendReport = () => {
     if (emailState === "sent") {
-      toast.message("Report already emailed to client");
+      toast.message("Already emailed to the client.");
     } else {
-      toast.message("Email is sent automatically on submission");
+      toast.message("Reports are emailed automatically when you send them.");
     }
   };
 

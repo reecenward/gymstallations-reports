@@ -39,23 +39,23 @@ function DraftResumeCard({ draft, step, onResume, onDiscard }) {
           </div>
           <div className="min-w-0">
             <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-              Pick up where you left off
+              You have a saved report
             </div>
             <div className="mt-0.5 truncate text-sm font-semibold text-navy">
               {label}
             </div>
             <div className="mt-0.5 text-xs text-muted-foreground">
-              On step {step + 1} of {STEP_LABELS.length} · {stepLabel}
+              On step {step + 1} of {STEP_LABELS.length}: {stepLabel}
             </div>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={onDiscard} aria-label="Discard draft">
+          <Button size="sm" variant="outline" onClick={onDiscard}>
             <Trash2 className="size-4" />
-            <span className="sr-only sm:not-sr-only">Discard</span>
+            Throw away
           </Button>
-          <Button size="sm" onClick={onResume}>
-            Continue
+          <Button size="lg" onClick={onResume}>
+            Keep going
             <ChevronRight className="size-4" />
           </Button>
         </div>
@@ -80,9 +80,8 @@ function BrandMark() {
 
 const FILTERS = [
   { id: "all", label: "All" },
-  { id: "review", label: "Awaiting Review", icon: ClipboardCheck, adminOnly: true },
-  { id: "replace", label: "Needs Replacement", icon: AlertTriangle },
-  { id: "failed", label: "Email Failed", icon: Mail },
+  { id: "review", label: "Needs review", icon: ClipboardCheck, adminOnly: true },
+  { id: "replace", label: "Repairs needed", icon: AlertTriangle },
 ];
 
 function FilterChip({ active, onClick, children, icon: Icon, count }) {
@@ -187,41 +186,40 @@ export function Dashboard({
       <div className="sticky top-0 z-20 -mx-4 border-b border-transparent bg-background/95 px-4 pb-4 pt-4 backdrop-blur sm:-mx-6 sm:px-6 sm:pt-6">
         <div className="mb-5 flex items-center justify-between gap-3">
           <BrandMark />
-          <div className="flex items-center gap-2">
-            <Button onClick={onNew} size="lg">
-              <Plus className="size-4" />
-              <span className="hidden sm:inline">New Report</span>
-              <span className="sm:hidden">New</span>
-            </Button>
-            <AccountMenu
-              user={user}
-              onManageUsers={onManageUsers}
-              onLogout={onLogout}
-            />
-          </div>
+          <AccountMenu
+            user={user}
+            onManageUsers={onManageUsers}
+            onLogout={onLogout}
+          />
         </div>
 
+        <Button onClick={onNew} size="xl" className="mb-4 w-full text-base">
+          <Plus className="size-5" />
+          Start New Report
+        </Button>
+
         <div className="space-y-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-neutral-400" />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search client, job #, brand, serial…"
-              className="h-11 pl-9 text-base"
-              disabled={jobs.length === 0}
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-neutral-400 hover:text-neutral-700"
-                aria-label="Clear search"
-              >
-                <X className="size-4" />
-              </button>
-            )}
-          </div>
+          {jobs.length >= 10 && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-neutral-400" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search client, job #, brand, serial…"
+                className="h-11 pl-9 text-base"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-neutral-400 hover:text-neutral-700"
+                  aria-label="Clear search"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
+            </div>
+          )}
           <div className="flex flex-wrap gap-1.5">
             {FILTERS.filter((f) => !f.adminOnly || isAdmin).map((f) => (
               <FilterChip
@@ -232,8 +230,6 @@ export function Dashboard({
                 count={
                   f.id === "replace"
                     ? counts.replace
-                    : f.id === "failed"
-                    ? counts.failed
                     : f.id === "review"
                     ? counts.review
                     : jobs.length
@@ -281,12 +277,11 @@ export function Dashboard({
                   No reports yet
                 </div>
                 <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
-                  Tap <span className="font-semibold text-navy">New Report</span>{" "}
-                  to log your first preventive maintenance visit. Takes about 3 minutes.
+                  Tap the green button to start your first one. Takes about 3 minutes.
                 </p>
-                <Button onClick={onNew} size="lg" className="w-full">
-                  <Plus className="size-4" />
-                  Create First Report
+                <Button onClick={onNew} size="xl" className="w-full">
+                  <Plus className="size-5" />
+                  Start New Report
                 </Button>
               </CardContent>
             </Card>
@@ -376,31 +371,31 @@ export function Dashboard({
                               <Badge variant="destructive">
                                 <AlertTriangle className="size-3" />
                                 {replace} need
-                                {replace !== 1 ? "" : "s"} replacement
+                                {replace !== 1 ? "" : "s"} repair
                               </Badge>
                             )}
                             {failed && (
-                              <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800">
+                              <Badge variant="outline" className="border-warn bg-warn/10 text-warn-foreground">
                                 <Mail className="size-3" />
-                                Email failed
+                                Email didn't send
                               </Badge>
                             )}
                             {job.reviewStatus === "sent_to_client" && (
-                              <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-800">
+                              <Badge variant="outline" className="border-neutral-300 bg-neutral-50 text-neutral-700">
                                 <ClipboardCheck className="size-3" />
                                 Sent to client
                               </Badge>
                             )}
                             {job.reviewStatus === "reviewed" && (
-                              <Badge variant="outline" className="border-sky-300 bg-sky-50 text-sky-800">
+                              <Badge variant="outline" className="border-neutral-300 bg-neutral-50 text-neutral-700">
                                 <ClipboardCheck className="size-3" />
                                 Reviewed
                               </Badge>
                             )}
                             {isAdmin && !job.isDemo && (job.reviewStatus || "pending") === "pending" && (
-                              <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800">
+                              <Badge variant="outline" className="border-warn bg-warn/10 text-warn-foreground">
                                 <ClipboardCheck className="size-3" />
-                                Awaiting review
+                                Needs review
                               </Badge>
                             )}
                           </div>
@@ -411,27 +406,16 @@ export function Dashboard({
                           <Button
                             variant="ghost"
                             size="sm"
-                            aria-label="Dismiss demo"
                             onClick={(e) => {
                               e.stopPropagation();
                               onDismissDemo();
                             }}
                           >
                             <X className="size-4" />
-                            <span className="sr-only sm:not-sr-only">Dismiss</span>
+                            Dismiss
                           </Button>
                         )}
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onView(job);
-                          }}
-                        >
-                          Open
-                          <ChevronRight className="size-4" />
-                        </Button>
+                        <ChevronRight className="size-5 text-neutral-400" aria-hidden="true" />
                       </div>
                     </CardContent>
                   </Card>
@@ -444,9 +428,9 @@ export function Dashboard({
 
       <ConfirmDialog
         open={confirmDiscard}
-        title="Discard this draft?"
-        description="Anything you've entered so far will be permanently removed."
-        confirmLabel="Discard"
+        title="Throw this away?"
+        description="Everything you've entered so far will be deleted. You can't undo this."
+        confirmLabel="Throw away"
         destructive
         onConfirm={() => {
           setConfirmDiscard(false);

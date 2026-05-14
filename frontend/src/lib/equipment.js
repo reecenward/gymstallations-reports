@@ -10,7 +10,7 @@ export const REPLACEMENT_GRADE = "Needs Replacement";
 
 export const GRADE_SHORT = {
   Good: "Good",
-  "Acceptable - Has Wear": "Acceptable",
+  "Acceptable - Has Wear": "Worn",
   "Needs Replacement": "Replace",
 };
 

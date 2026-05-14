@@ -23,9 +23,9 @@ import {
 import { cn } from "@/lib/utils";
 
 const REVIEW_BADGE = {
-  pending: { label: "Awaiting Review", cls: "bg-amber-100 text-amber-800 border-amber-200" },
-  reviewed: { label: "Reviewed", cls: "bg-sky-100 text-sky-800 border-sky-200" },
-  sent_to_client: { label: "Sent to Client", cls: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+  pending: { label: "Needs review", cls: "bg-warn/10 text-warn-foreground border-warn" },
+  reviewed: { label: "Reviewed", cls: "bg-neutral-100 text-neutral-700 border-neutral-200" },
+  sent_to_client: { label: "Sent to client", cls: "bg-neutral-100 text-neutral-700 border-neutral-200" },
 };
 
 function SectionLabel({ children }) {
@@ -244,7 +244,7 @@ export function ReportView({
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between no-print">
         <Button onClick={onBack} variant="outline">
           <ArrowLeft className="size-4" />
-          Dashboard
+          Back to reports
         </Button>
         <div className="flex flex-wrap gap-2">
           {isAdmin && onEdit && (
@@ -253,62 +253,63 @@ export function ReportView({
               Edit
             </Button>
           )}
-          <Button onClick={onPrint} variant="secondary">
+          <Button onClick={onPrint} variant="outline">
             <Printer className="size-4" />
             Print
           </Button>
-          {emailState === "idle" && (
-            <Button onClick={onSend}>
-              <Send className="size-4" />
-              Send Report
-            </Button>
-          )}
-          {emailState === "sending" && (
-            <Button disabled>
-              <Loader2 className="size-4 animate-spin" />
-              Sending…
-            </Button>
-          )}
-          {emailState === "sent" && (
-            <Button variant="success" disabled>
-              <Check className="size-4" />
-              Report Sent
-            </Button>
-          )}
-          {emailState === "failed" && (
-            <Button variant="destructive" onClick={onSend}>
-              <Send className="size-4" />
-              Email Failed
-            </Button>
-          )}
         </div>
       </div>
 
+      {emailState === "sent" && (
+        <div className="mb-4 flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-semibold text-primary no-print">
+          <Check className="size-4" />
+          Sent to the client by email.
+        </div>
+      )}
+      {emailState === "sending" && (
+        <div className="mb-4 flex items-center gap-2 rounded-md border bg-neutral-50 px-3 py-2 text-sm font-semibold text-neutral-700 no-print">
+          <Loader2 className="size-4 animate-spin" />
+          Sending email…
+        </div>
+      )}
+      {emailState === "failed" && (
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-md border border-warn bg-warn/10 px-3 py-2 no-print">
+          <div className="flex items-center gap-2 text-sm font-semibold text-warn-foreground">
+            <Mail className="size-4" />
+            Email didn't send. The report is saved.
+          </div>
+          <Button size="sm" onClick={onSend}>
+            <Send className="size-4" />
+            Try again
+          </Button>
+        </div>
+      )}
+
       {isAdmin && (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border bg-white p-3 no-print">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-            Admin review
+          <span className="text-sm font-semibold text-navy">
+            Status:
           </span>
-          <span className={cn("rounded-full border px-2 py-0.5 text-[11px] font-bold", badge.cls)}>
+          <span className={cn("rounded-full border px-2 py-0.5 text-xs font-bold", badge.cls)}>
             {badge.label}
           </span>
           <div className="ml-auto flex flex-wrap gap-2">
             {reviewStatus === "pending" && onMarkReviewed && (
-              <Button size="sm" variant="secondary" onClick={onMarkReviewed}>
+              <Button size="sm" variant="outline" onClick={onMarkReviewed}>
                 <ClipboardCheck className="size-4" />
-                Mark Reviewed
+                Mark as reviewed
               </Button>
             )}
             {reviewStatus !== "sent_to_client" && onMarkSent && (
               <Button size="sm" onClick={onMarkSent}>
                 <Mail className="size-4" />
-                Mark Sent to Client
+                Mark as sent
               </Button>
             )}
             {reviewStatus !== "pending" && onResetReview && (
-              <Button size="sm" variant="outline" onClick={onResetReview}>
+              <Button size="sm" variant="ghost" onClick={onResetReview}>
                 <Undo2 className="size-4" />
-                Reset
+                Undo
               </Button>
             )}
           </div>
@@ -346,11 +347,11 @@ export function ReportView({
           </ReportSection>
 
           {(job.issuesFound || job.partsReplaced || job.recommendations) && (
-            <ReportSection title="Technician Notes">
-              {job.issuesFound && <InfoBlock label="Issues Found" value={job.issuesFound} />}
-              {job.partsReplaced && <InfoBlock label="Parts Replaced" value={job.partsReplaced} />}
+            <ReportSection title="Notes from the technician">
+              {job.issuesFound && <InfoBlock label="Issues" value={job.issuesFound} />}
+              {job.partsReplaced && <InfoBlock label="Parts replaced" value={job.partsReplaced} />}
               {job.recommendations && (
-                <InfoBlock label="Recommendations" value={job.recommendations} />
+                <InfoBlock label="What to do next" value={job.recommendations} />
               )}
             </ReportSection>
           )}

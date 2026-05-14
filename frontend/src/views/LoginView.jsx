@@ -20,7 +20,12 @@ export function LoginView({ onAuthed }) {
       setToken(res.access_token);
       onAuthed(res.user);
     } catch (err) {
-      toast.error(err.message || "Authentication failed");
+      const msg = (err.message || "").toLowerCase();
+      const friendly =
+        msg.includes("invalid") || msg.includes("credential") || msg.includes("password")
+          ? "Wrong email or password. Try again."
+          : "Couldn't sign in. Check your connection and try again.";
+      toast.error(friendly);
     } finally {
       setBusy(false);
     }
@@ -45,11 +50,11 @@ export function LoginView({ onAuthed }) {
 
           <Card className="shadow-sm">
             <CardContent className="p-6 sm:p-7">
-              <h1 className="mb-1 text-xl font-bold tracking-tight text-navy">
+              <h1 className="mb-1 text-2xl font-bold tracking-tight text-navy">
                 Sign in
               </h1>
               <p className="mb-5 text-sm text-muted-foreground">
-                Enter your work email to access the reports app.
+                Use your work email and password.
               </p>
               <form className="space-y-4" onSubmit={submit}>
                 <div className="space-y-1.5">
@@ -79,7 +84,7 @@ export function LoginView({ onAuthed }) {
                 </div>
                 <Button
                   type="submit"
-                  size="lg"
+                  size="xl"
                   className="mt-1 w-full"
                   disabled={busy}
                 >
@@ -97,7 +102,7 @@ export function LoginView({ onAuthed }) {
           </Card>
 
           <p className="mt-5 text-center text-xs text-muted-foreground">
-            Accounts are created by the administrator.
+            Don't have an account? Ask your admin to create one.
           </p>
         </div>
       </div>

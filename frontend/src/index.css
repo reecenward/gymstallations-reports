@@ -8,19 +8,24 @@
     --foreground: 0 0% 6%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 6%;
-    --primary: 0 0% 6%;
+    /* Primary = action green */
+    --primary: 142 71% 38%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 12%;
+    /* Secondary = navigation blue */
+    --secondary: 217 91% 47%;
     --secondary-foreground: 0 0% 100%;
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 40%;
     --accent: 0 0% 94%;
     --accent-foreground: 0 0% 6%;
-    --destructive: 0 72% 41%;
+    --destructive: 0 72% 45%;
     --destructive-foreground: 0 0% 100%;
+    /* Warning amber */
+    --warn: 38 92% 50%;
+    --warn-foreground: 30 70% 18%;
     --border: 0 0% 90%;
     --input: 0 0% 90%;
-    --ring: 0 0% 30%;
+    --ring: 142 71% 38%;
     --radius: 0.625rem;
   }
 

@@ -5,9 +5,9 @@ export function StepSite({ draft, upd }) {
   return (
     <div className="space-y-5">
       <div>
-        <div className="mb-1 text-sm font-semibold text-navy">Site details</div>
-        <p className="text-xs text-muted-foreground">
-          Where the work is happening. All fields required.
+        <h2 className="text-lg font-bold text-navy">Where are you working?</h2>
+        <p className="text-sm text-muted-foreground">
+          Tell us about the job site.
         </p>
       </div>
 
@@ -21,7 +21,7 @@ export function StepSite({ draft, upd }) {
         />
       </Field>
 
-      <Field label="Site Address" required htmlFor="siteAddress">
+      <Field label="Site address" required htmlFor="siteAddress">
         <Input
           id="siteAddress"
           className="h-12 text-base"
@@ -32,12 +32,13 @@ export function StepSite({ draft, upd }) {
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Technician" required htmlFor="technicianName">
+        <Field label="Your name" required htmlFor="technicianName">
           <Input
             id="technicianName"
             className="h-12 text-base"
             value={draft.technicianName}
             onChange={(e) => upd("technicianName", e.target.value)}
+            placeholder="First Last"
           />
         </Field>
         <Field label="Date" required htmlFor="date">
@@ -49,12 +50,13 @@ export function StepSite({ draft, upd }) {
             onChange={(e) => upd("date", e.target.value)}
           />
         </Field>
-        <Field label="Job Number" required htmlFor="jobNumber">
+        <Field label="Job number" required htmlFor="jobNumber">
           <Input
             id="jobNumber"
             className="h-12 text-base"
             value={draft.jobNumber}
             onChange={(e) => upd("jobNumber", e.target.value)}
+            placeholder="From your job sheet"
           />
         </Field>
       </div>
