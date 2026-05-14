@@ -42,7 +42,12 @@ export function FormView({
     if (step === 1) {
       if (items.length === 0) return false;
       return items.every(
-        (it) => it.brand && it.model && it.serialNumber && it.distancePhoto
+        (it) =>
+          it.brand &&
+          it.model &&
+          it.serialNumber &&
+          it.distancePhoto &&
+          it.serialPhoto
       );
     }
     if (step === 2) {

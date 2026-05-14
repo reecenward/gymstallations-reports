@@ -9,7 +9,7 @@ import { EQUIPMENT_TYPES } from "@/lib/equipment";
 import { compressImage } from "@/lib/image";
 import { cn } from "@/lib/utils";
 
-function DistancePhotoPicker({ value, onChange }) {
+function PhotoPicker({ value, onChange }) {
   const [busy, setBusy] = useState(false);
   const handle = async (e) => {
     const file = e.target.files?.[0];
@@ -184,11 +184,17 @@ export function StepEquipment({ draft, addItem, updateItem, removeItem }) {
                 </Field>
               </div>
 
-              <div className="mt-3">
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <Field label="Equipment Photo (full unit)" required>
-                  <DistancePhotoPicker
+                  <PhotoPicker
                     value={it.distancePhoto}
                     onChange={(v) => updateItem(it.id, { distancePhoto: v })}
+                  />
+                </Field>
+                <Field label="Serial Number Photo" required>
+                  <PhotoPicker
+                    value={it.serialPhoto}
+                    onChange={(v) => updateItem(it.id, { serialPhoto: v })}
                   />
                 </Field>
               </div>
