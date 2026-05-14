@@ -1,16 +1,13 @@
 import { ArrowLeft, Printer, Send, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ConditionChart } from "@/components/ConditionChart";
 import { LifecycleBar } from "@/components/LifecycleBar";
-import { GradePill } from "@/components/GradeBadge";
+import { HealthSummary } from "@/components/HealthSummary";
 import {
   EQUIPMENT_TYPES,
   EQUIPMENT_ICONS,
-  GRADES,
   GRADE_SHORT,
   GRADE_TW,
-  gradeCounts,
 } from "@/lib/equipment";
 import { cn } from "@/lib/utils";
 
@@ -58,7 +55,6 @@ function InfoBlock({ label, value }) {
 export function ReportView({ job, emailState, onSend, onBack, onPrint }) {
   const items =
     EQUIPMENT_TYPES[job.equipmentType] || Object.keys(job.checklist || {});
-  const counts = gradeCounts(job.checklist);
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-5 sm:px-6 sm:py-8">
@@ -100,26 +96,26 @@ export function ReportView({ job, emailState, onSend, onBack, onPrint }) {
       </div>
 
       <Card className="overflow-hidden print-shadow-none">
-        <div className="flex flex-col gap-4 bg-navy p-5 text-white sm:flex-row sm:items-start sm:justify-between sm:p-7">
+        <div className="flex flex-col gap-4 bg-neutral-900 p-5 text-white sm:flex-row sm:items-start sm:justify-between sm:p-7">
           <div>
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-base font-black">
+              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white text-base font-black text-neutral-900">
                 G
               </div>
               <span className="text-xl font-extrabold tracking-tight">
                 Gymstallations
               </span>
             </div>
-            <div className="mt-1 pl-12 text-xs text-slate-300">
+            <div className="mt-1 pl-12 text-xs text-neutral-400">
               Preventive Maintenance Report
             </div>
           </div>
           <div className="text-left sm:text-right">
-            <div className="text-lg font-extrabold text-primary sm:text-xl">
+            <div className="text-lg font-extrabold sm:text-xl">
               #{job.jobNumber}
             </div>
-            <div className="mt-0.5 text-xs text-slate-300">{job.date}</div>
-            <div className="mt-0.5 text-[10px] uppercase tracking-wider text-slate-400">
+            <div className="mt-0.5 text-xs text-neutral-400">{job.date}</div>
+            <div className="mt-0.5 text-[10px] uppercase tracking-wider text-neutral-500">
               Service Report
             </div>
           </div>
@@ -173,40 +169,22 @@ export function ReportView({ job, emailState, onSend, onBack, onPrint }) {
             </div>
           )}
 
-          <div>
-            <SectionLabel>Condition Summary</SectionLabel>
-            <div className="rounded-lg border bg-slate-50 p-4 sm:p-5">
-              <ConditionChart checklist={job.checklist} />
-            </div>
-          </div>
+          <HealthSummary draft={job} title="Condition Summary" />
 
-          <div>
-            <SectionLabel>Equipment Lifecycle</SectionLabel>
-            <div className="rounded-lg border bg-slate-50 p-4 sm:p-5">
-              <LifecycleBar
-                manufacturingDate={job.manufacturingDate}
-                installDate={job.installDate}
-              />
+          {(job.manufacturingDate || job.installDate) && (
+            <div>
+              <SectionLabel>Equipment Lifecycle</SectionLabel>
+              <div className="rounded-lg border bg-neutral-50 p-4 sm:p-5">
+                <LifecycleBar
+                  manufacturingDate={job.manufacturingDate}
+                  installDate={job.installDate}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           <div>
             <SectionLabel>Inspection Results</SectionLabel>
-            <div className="mb-3 flex flex-wrap gap-1.5">
-              {GRADES.map((g) => (
-                <GradePill
-                  key={g}
-                  grade={g}
-                  count={counts[g]}
-                  label={GRADE_SHORT[g]}
-                />
-              ))}
-              {counts.ungraded > 0 && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                  <span className="font-bold">{counts.ungraded}</span> Ungraded
-                </span>
-              )}
-            </div>
             <div className="space-y-1.5">
               {items.map((item) => {
                 const cell = job.checklist?.[item] || {

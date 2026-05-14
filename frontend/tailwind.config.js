@@ -39,19 +39,13 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         navy: {
-          DEFAULT: "#0f172a",
-          soft: "#1e293b",
+          DEFAULT: "#0a0a0a",
+          soft: "#171717",
         },
         brand: {
-          DEFAULT: "#f97316",
-          50: "#fff7ed",
-          200: "#fed7aa",
-        },
-        grade: {
-          excellent: { fg: "#15803d", bg: "#dcfce7", border: "#86efac" },
-          good: { fg: "#0369a1", bg: "#e0f2fe", border: "#7dd3fc" },
-          wear: { fg: "#a16207", bg: "#fef3c7", border: "#fde68a" },
-          replace: { fg: "#b91c1c", bg: "#fee2e2", border: "#fca5a5" },
+          DEFAULT: "#0a0a0a",
+          50: "#f5f5f5",
+          200: "#e5e5e5",
         },
       },
       borderRadius: {

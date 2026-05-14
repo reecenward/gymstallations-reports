@@ -1,16 +1,15 @@
 import { Field } from "@/components/Field";
 import { Textarea } from "@/components/ui/textarea";
-import { GRADES, GRADE_SHORT, GRADE_TW, gradeCounts } from "@/lib/equipment";
-import { cn } from "@/lib/utils";
+import { HealthSummary } from "@/components/HealthSummary";
 
 export function StepFinish({ draft, upd }) {
-  const counts = gradeCounts(draft.checklist);
-
   return (
     <div className="space-y-6">
+      <HealthSummary draft={draft} />
+
       <div>
-        <div className="mb-1 text-sm font-semibold text-navy">Notes</div>
-        <p className="mb-4 text-xs text-muted-foreground">
+        <div className="mb-1 text-sm font-semibold text-neutral-900">Notes</div>
+        <p className="mb-4 text-xs text-neutral-500">
           Anything not covered by the checklist.
         </p>
         <div className="space-y-4">
@@ -45,41 +44,6 @@ export function StepFinish({ draft, upd }) {
             />
           </Field>
         </div>
-      </div>
-
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-        <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Summary
-        </div>
-        <div className="mb-3 text-sm text-navy-soft">
-          <div className="font-semibold text-navy">{draft.clientName || "—"}</div>
-          <div>
-            {draft.equipmentType ? `${draft.equipmentType} · ${draft.brand} ${draft.model}` : "—"}
-          </div>
-        </div>
-        <div className="grid grid-cols-4 gap-1.5">
-          {GRADES.map((g) => {
-            const c = counts[g] || 0;
-            const tw = GRADE_TW[g];
-            return (
-              <div
-                key={g}
-                className={cn(
-                  "rounded-md border px-2 py-1.5 text-center",
-                  c > 0 ? `${tw.bg} ${tw.border} ${tw.text}` : "border-slate-200 bg-white text-muted-foreground"
-                )}
-              >
-                <div className="text-base font-bold">{c}</div>
-                <div className="text-[10px] font-semibold uppercase">{GRADE_SHORT[g]}</div>
-              </div>
-            );
-          })}
-        </div>
-        {counts.ungraded > 0 && (
-          <div className="mt-2 text-xs text-amber-700">
-            {counts.ungraded} item{counts.ungraded !== 1 ? "s" : ""} ungraded
-          </div>
-        )}
       </div>
     </div>
   );
