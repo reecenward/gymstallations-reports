@@ -1,39 +1,31 @@
 export const GRADES = [
-  "Excellent",
   "Good",
   "Acceptable - Has Wear",
   "Needs Replacement",
 ];
 
+// The lowest grade requires the technician to attach a photo of the issue
+// before moving on; the others don't.
+export const REPLACEMENT_GRADE = "Needs Replacement";
+
 export const GRADE_SHORT = {
-  Excellent: "Excellent",
   Good: "Good",
   "Acceptable - Has Wear": "Acceptable",
   "Needs Replacement": "Replace",
 };
 
-// Grades keep semantic color (green → amber → red) because that's the
-// universal "good / bad" language at a glance. The rest of the UI stays
-// monochrome — color is reserved for status, not decoration.
 export const GRADE_COLORS = {
-  Excellent: { fg: "#15803d", bg: "#dcfce7", border: "#86efac", hex: "#16a34a" },
-  Good: { fg: "#166534", bg: "#ecfdf5", border: "#a7f3d0", hex: "#65a30d" },
+  Good: { fg: "#166534", bg: "#ecfdf5", border: "#a7f3d0", hex: "#16a34a" },
   "Acceptable - Has Wear": { fg: "#a16207", bg: "#fef3c7", border: "#fde68a", hex: "#f59e0b" },
   "Needs Replacement": { fg: "#b91c1c", bg: "#fee2e2", border: "#fca5a5", hex: "#dc2626" },
 };
 
 export const GRADE_TW = {
-  Excellent: {
+  Good: {
     text: "text-emerald-700",
     bg: "bg-emerald-50",
     border: "border-emerald-200",
     solid: "bg-emerald-600 text-white",
-  },
-  Good: {
-    text: "text-lime-700",
-    bg: "bg-lime-50",
-    border: "border-lime-200",
-    solid: "bg-lime-600 text-white",
   },
   "Acceptable - Has Wear": {
     text: "text-amber-700",
@@ -148,24 +140,32 @@ export const makeInitialChecklist = (type) => {
   );
 };
 
+let _itemSeq = 0;
+const makeItemId = () =>
+  `it_${Date.now().toString(36)}_${(_itemSeq++).toString(36)}_${Math.random()
+    .toString(36)
+    .slice(2, 6)}`;
+
+export const makeItem = (type = "") => ({
+  id: makeItemId(),
+  equipmentType: type,
+  brand: "",
+  model: "",
+  serialNumber: "",
+  distancePhoto: null,
+  serialPhoto: null,
+  location: "",
+  checklist: makeInitialChecklist(type),
+  issuePhotos: [],
+});
+
 export const makeDraft = () => ({
   clientName: "",
   siteAddress: "",
   date: new Date().toISOString().slice(0, 10),
   jobNumber: `GYM-${Math.floor(100000 + Math.random() * 900000)}`,
   technicianName: "",
-  equipmentType: "",
-  brand: "",
-  model: "",
-  serialNumber: "",
-  assetId: "",
-  location: "",
-  manufacturingDate: "",
-  installDate: "",
-  hoursOnUnit: "",
-  ageYears: "",
-  serialPhoto: null,
-  checklist: {},
+  items: [],
   issuesFound: "",
   partsReplaced: "",
   recommendations: "",
@@ -173,7 +173,6 @@ export const makeDraft = () => ({
 
 export function gradeCounts(checklist) {
   const counts = {
-    Excellent: 0,
     Good: 0,
     "Acceptable - Has Wear": 0,
     "Needs Replacement": 0,
@@ -184,5 +183,55 @@ export function gradeCounts(checklist) {
     else counts.ungraded++;
   }
   return counts;
+}
+
+// Returns { graded, total, blocked } for a single item's checklist.
+// "blocked" counts cells where grade=Needs Replacement but no photo attached
+// (treated as ungraded for completion purposes).
+export function itemProgress(item) {
+  const checklist = item?.checklist || {};
+  const entries = Object.values(checklist);
+  let graded = 0;
+  let blocked = 0;
+  for (const c of entries) {
+    if (!c || !c.grade) continue;
+    if (c.grade === REPLACEMENT_GRADE && !c.photo) {
+      blocked++;
+      continue;
+    }
+    graded++;
+  }
+  return { graded, total: entries.length, blocked };
+}
+
+export function itemComplete(item) {
+  const { graded, total, blocked } = itemProgress(item);
+  return total > 0 && graded === total && blocked === 0;
+}
+
+// Legacy reports stored a single piece of equipment at the top level. Wrap
+// it into an items array so the multi-item code path can handle it.
+export function normalizeDraft(draft) {
+  if (!draft) return makeDraft();
+  if (Array.isArray(draft.items) && draft.items.length) return draft;
+  const legacy = {
+    id: makeItemId(),
+    equipmentType: draft.equipmentType || "",
+    brand: draft.brand || "",
+    model: draft.model || "",
+    serialNumber: draft.serialNumber || "",
+    distancePhoto: null,
+    serialPhoto: draft.serialPhoto || null,
+    location: draft.location || "",
+    checklist: draft.checklist || {},
+    issuePhotos: [],
+  };
+  const hasLegacy =
+    legacy.equipmentType ||
+    legacy.brand ||
+    legacy.model ||
+    legacy.serialNumber ||
+    Object.keys(legacy.checklist).length > 0;
+  return { ...draft, items: hasLegacy ? [legacy] : [] };
 }
 

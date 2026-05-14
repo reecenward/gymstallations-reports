@@ -3,54 +3,68 @@ import { ArrowLeft, ArrowRight, Check, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { StepBasics } from "@/views/steps/StepBasics";
+import { StepSite } from "@/views/steps/StepSite";
+import { StepEquipment } from "@/views/steps/StepEquipment";
 import { StepChecklist } from "@/views/steps/StepChecklist";
 import { StepFinish } from "@/views/steps/StepFinish";
+import { itemComplete } from "@/lib/equipment";
 import { cn } from "@/lib/utils";
 
-const STEPS = ["Basics", "Inspection", "Notes"];
+const STEPS = ["Site", "Equipment", "Inspection", "Notes"];
 
 export function FormView({
   step,
   setStep,
   draft,
   upd,
-  updEquipmentType,
-  updChecklistGrade,
-  updChecklistNotes,
+  addItem,
+  updateItem,
+  removeItem,
   onSubmit,
   onBack,
   onDiscard,
+  editing = false,
 }) {
   const [confirmDiscard, setConfirmDiscard] = useState(false);
 
+  const items = draft.items || [];
+
   const canNext = () => {
-    if (step === 0) return !!draft.equipmentType && !!draft.clientName && !!draft.brand && !!draft.model;
+    if (step === 0) {
+      return !!(
+        draft.clientName &&
+        draft.siteAddress &&
+        draft.technicianName &&
+        draft.date &&
+        draft.jobNumber
+      );
+    }
+    if (step === 1) {
+      if (items.length === 0) return false;
+      return items.every(
+        (it) => it.brand && it.model && it.serialNumber && it.distancePhoto
+      );
+    }
+    if (step === 2) {
+      return items.every(itemComplete);
+    }
     return true;
   };
 
   const isLast = step === STEPS.length - 1;
+  const title = editing ? "Edit Report" : "New Report";
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-4 pb-28 pt-4 sm:px-6 sm:pt-6">
       <div className="mb-4 flex items-center gap-3 no-print">
-        <Button
-          onClick={onBack}
-          variant="ghost"
-          size="icon"
-          aria-label="Back to dashboard"
-        >
+        <Button onClick={onBack} variant="ghost" size="icon" aria-label="Back">
           <ArrowLeft className="size-5" />
         </Button>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-base font-bold text-navy">
-            New Report
-          </div>
-          <div className="truncate text-xs text-muted-foreground">
-            #{draft.jobNumber}
-          </div>
+          <div className="truncate text-base font-bold text-navy">{title}</div>
+          <div className="truncate text-xs text-muted-foreground">#{draft.jobNumber}</div>
         </div>
-        {onDiscard && (
+        {onDiscard && !editing && (
           <Button
             onClick={() => setConfirmDiscard(true)}
             variant="ghost"
@@ -85,17 +99,17 @@ export function FormView({
 
       <Card className="flex-1">
         <CardContent className="p-4 sm:p-6">
-          {step === 0 && (
-            <StepBasics draft={draft} upd={upd} updEquipmentType={updEquipmentType} />
-          )}
+          {step === 0 && <StepSite draft={draft} upd={upd} />}
           {step === 1 && (
-            <StepChecklist
+            <StepEquipment
               draft={draft}
-              updChecklistGrade={updChecklistGrade}
-              updChecklistNotes={updChecklistNotes}
+              addItem={addItem}
+              updateItem={updateItem}
+              removeItem={removeItem}
             />
           )}
-          {step === 2 && <StepFinish draft={draft} upd={upd} />}
+          {step === 2 && <StepChecklist draft={draft} updateItem={updateItem} />}
+          {step === 3 && <StepFinish draft={draft} upd={upd} />}
         </CardContent>
       </Card>
 
@@ -114,7 +128,7 @@ export function FormView({
           {isLast ? (
             <Button onClick={onSubmit} variant="success" size="lg" className="flex-1">
               <Check className="size-4" />
-              Submit
+              {editing ? "Save" : "Submit"}
             </Button>
           ) : (
             <Button

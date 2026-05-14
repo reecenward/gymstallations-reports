@@ -1,15 +1,31 @@
-import { ArrowLeft, Printer, Send, Check, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Printer,
+  Send,
+  Check,
+  Loader2,
+  Pencil,
+  ClipboardCheck,
+  Mail,
+  Undo2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { LifecycleBar } from "@/components/LifecycleBar";
 import { HealthSummary } from "@/components/HealthSummary";
 import { EquipmentIcon } from "@/components/EquipmentIcon";
 import {
   EQUIPMENT_TYPES,
   GRADE_SHORT,
   GRADE_TW,
+  normalizeDraft,
 } from "@/lib/equipment";
 import { cn } from "@/lib/utils";
+
+const REVIEW_BADGE = {
+  pending: { label: "Awaiting Review", cls: "bg-amber-100 text-amber-800 border-amber-200" },
+  reviewed: { label: "Reviewed", cls: "bg-sky-100 text-sky-800 border-sky-200" },
+  sent_to_client: { label: "Sent to Client", cls: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+};
 
 function SectionLabel({ children }) {
   return (
@@ -54,9 +70,110 @@ function InfoBlock({ label, value }) {
   );
 }
 
-export function ReportView({ job, emailState, onSend, onBack, onPrint }) {
-  const items =
-    EQUIPMENT_TYPES[job.equipmentType] || Object.keys(job.checklist || {});
+function ItemCard({ item, index }) {
+  const checklistKeys =
+    EQUIPMENT_TYPES[item.equipmentType] || Object.keys(item.checklist || {});
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="flex items-center gap-3 border-b bg-neutral-50 p-4">
+        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white text-neutral-900 ring-1 ring-neutral-200">
+          <EquipmentIcon type={item.equipmentType} className="size-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+            Item #{index + 1}
+          </div>
+          <div className="truncate text-base font-bold text-navy">
+            {item.equipmentType}
+          </div>
+        </div>
+      </div>
+
+      <CardContent className="space-y-5 p-4 sm:p-5">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <ReportSection title="Equipment">
+            <InfoRow label="Brand / Model" value={`${item.brand || ""} ${item.model || ""}`.trim() || "—"} />
+            <InfoRow label="Serial #" value={item.serialNumber} />
+            <InfoRow label="Location" value={item.location} />
+          </ReportSection>
+          {item.distancePhoto && (
+            <div>
+              <SectionLabel>Photo</SectionLabel>
+              <img
+                src={item.distancePhoto}
+                alt={`${item.equipmentType} unit`}
+                className="block max-h-56 rounded-md border object-cover"
+              />
+            </div>
+          )}
+        </div>
+
+        <HealthSummary item={item} title="Condition" />
+
+        <div>
+          <SectionLabel>Inspection Results</SectionLabel>
+          <div className="space-y-1.5">
+            {checklistKeys.map((key) => {
+              const cell = item.checklist?.[key] || { grade: null, notes: "" };
+              const tw = cell.grade ? GRADE_TW[cell.grade] : null;
+              return (
+                <div
+                  key={key}
+                  className={cn(
+                    "flex items-start gap-3 rounded-md border p-3",
+                    tw ? `${tw.bg} ${tw.border}` : "border-slate-200 bg-slate-50"
+                  )}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold text-navy-soft">{key}</div>
+                    {cell.notes && (
+                      <div className="mt-1 text-xs italic text-muted-foreground">
+                        “{cell.notes}”
+                      </div>
+                    )}
+                    {cell.photo && (
+                      <img
+                        src={cell.photo}
+                        alt="Issue"
+                        className="mt-2 block max-h-32 rounded border object-cover"
+                      />
+                    )}
+                  </div>
+                  <span
+                    className={cn(
+                      "flex-shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider",
+                      tw ? tw.solid : "bg-slate-400 text-white"
+                    )}
+                  >
+                    {cell.grade ? GRADE_SHORT[cell.grade] : "—"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function ReportView({
+  job,
+  emailState,
+  onSend,
+  onBack,
+  onPrint,
+  isAdmin,
+  onEdit,
+  onMarkReviewed,
+  onMarkSent,
+  onResetReview,
+}) {
+  const normalized = normalizeDraft(job);
+  const items = normalized.items || [];
+  const reviewStatus = job.reviewStatus || "pending";
+  const badge = REVIEW_BADGE[reviewStatus] || REVIEW_BADGE.pending;
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-5 sm:px-6 sm:py-8">
@@ -66,6 +183,12 @@ export function ReportView({ job, emailState, onSend, onBack, onPrint }) {
           Dashboard
         </Button>
         <div className="flex flex-wrap gap-2">
+          {isAdmin && onEdit && (
+            <Button onClick={onEdit} variant="secondary">
+              <Pencil className="size-4" />
+              Edit
+            </Button>
+          )}
           <Button onClick={onPrint} variant="secondary">
             <Printer className="size-4" />
             Print
@@ -97,6 +220,37 @@ export function ReportView({ job, emailState, onSend, onBack, onPrint }) {
         </div>
       </div>
 
+      {isAdmin && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border bg-white p-3 no-print">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            Admin review
+          </span>
+          <span className={cn("rounded-full border px-2 py-0.5 text-[11px] font-bold", badge.cls)}>
+            {badge.label}
+          </span>
+          <div className="ml-auto flex flex-wrap gap-2">
+            {reviewStatus === "pending" && onMarkReviewed && (
+              <Button size="sm" variant="secondary" onClick={onMarkReviewed}>
+                <ClipboardCheck className="size-4" />
+                Mark Reviewed
+              </Button>
+            )}
+            {reviewStatus !== "sent_to_client" && onMarkSent && (
+              <Button size="sm" onClick={onMarkSent}>
+                <Mail className="size-4" />
+                Mark Sent to Client
+              </Button>
+            )}
+            {reviewStatus !== "pending" && onResetReview && (
+              <Button size="sm" variant="outline" onClick={onResetReview}>
+                <Undo2 className="size-4" />
+                Reset
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
       <Card className="overflow-hidden print-shadow-none">
         <div className="flex flex-col gap-4 bg-neutral-900 p-5 text-white sm:flex-row sm:items-start sm:justify-between sm:p-7">
           <div>
@@ -104,172 +258,61 @@ export function ReportView({ job, emailState, onSend, onBack, onPrint }) {
               <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white text-base font-black text-neutral-900">
                 G
               </div>
-              <span className="text-xl font-extrabold tracking-tight">
-                Gymstallations
-              </span>
+              <span className="text-xl font-extrabold tracking-tight">Gymstallations</span>
             </div>
             <div className="mt-1 pl-12 text-xs text-neutral-400">
               Preventive Maintenance Report
             </div>
           </div>
           <div className="text-left sm:text-right">
-            <div className="text-lg font-extrabold sm:text-xl">
-              #{job.jobNumber}
-            </div>
+            <div className="text-lg font-extrabold sm:text-xl">#{job.jobNumber}</div>
             <div className="mt-0.5 text-xs text-neutral-400">{job.date}</div>
             <div className="mt-0.5 text-[10px] uppercase tracking-wider text-neutral-500">
-              Service Report
+              {items.length} item{items.length === 1 ? "" : "s"}
             </div>
           </div>
         </div>
 
         <CardContent className="space-y-5 p-4 sm:space-y-7 sm:p-7">
-          <div className="grid gap-4 lg:grid-cols-2">
-            <ReportSection title="Job Details">
-              <InfoRow label="Client" value={job.clientName} />
-              <InfoRow label="Site" value={job.siteAddress} />
-              <InfoRow label="Technician" value={job.technicianName} />
-              <InfoRow label="Date" value={job.date} />
-            </ReportSection>
-            <ReportSection title="Equipment">
-              <div className="mb-2.5 flex flex-col gap-0.5 text-sm sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
-                <span className="flex-shrink-0 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm sm:font-normal sm:normal-case sm:tracking-normal">
-                  Type
-                </span>
-                <span className="flex items-center gap-1.5 font-semibold text-navy-soft sm:justify-end">
-                  {job.equipmentType ? (
-                    <>
-                      <EquipmentIcon type={job.equipmentType} className="size-4" />
-                      {job.equipmentType}
-                    </>
-                  ) : (
-                    "—"
-                  )}
-                </span>
-              </div>
-              <InfoRow
-                label="Brand / Model"
-                value={`${job.brand} ${job.model}`.trim() || "—"}
-              />
-              <InfoRow label="Serial #" value={job.serialNumber} />
-              <InfoRow label="Asset ID" value={job.assetId} />
-              <InfoRow label="Location" value={job.location} />
-              <InfoRow label="Mfg Date" value={job.manufacturingDate} />
-              <InfoRow label="Install Date" value={job.installDate} />
-              <InfoRow
-                label="Hours"
-                value={job.hoursOnUnit ? `${job.hoursOnUnit} hrs` : "—"}
-              />
-              <InfoRow
-                label="Age"
-                value={job.ageYears ? `${job.ageYears} yr(s)` : "—"}
-              />
-            </ReportSection>
-          </div>
-
-          {job.serialPhoto && (
-            <div>
-              <SectionLabel>Serial Number Photo</SectionLabel>
-              <img
-                src={job.serialPhoto}
-                alt="Serial number"
-                className="block max-h-48 max-w-xs rounded-md border"
-              />
-            </div>
-          )}
-
-          <HealthSummary draft={job} title="Condition Summary" />
-
-          {(job.manufacturingDate || job.installDate) && (
-            <div>
-              <SectionLabel>Equipment Lifecycle</SectionLabel>
-              <div className="rounded-lg border bg-neutral-50 p-4 sm:p-5">
-                <LifecycleBar
-                  manufacturingDate={job.manufacturingDate}
-                  installDate={job.installDate}
-                />
-              </div>
-            </div>
-          )}
-
-          <div>
-            <SectionLabel>Inspection Results</SectionLabel>
-            <div className="space-y-1.5">
-              {items.map((item) => {
-                const cell = job.checklist?.[item] || {
-                  grade: null,
-                  notes: "",
-                };
-                const tw = cell.grade ? GRADE_TW[cell.grade] : null;
-                return (
-                  <div
-                    key={item}
-                    className={cn(
-                      "flex items-start gap-3 rounded-md border p-3",
-                      tw ? `${tw.bg} ${tw.border}` : "border-slate-200 bg-slate-50"
-                    )}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold text-navy-soft">
-                        {item}
-                      </div>
-                      {cell.notes && (
-                        <div className="mt-1 text-xs italic text-muted-foreground">
-                          “{cell.notes}”
-                        </div>
-                      )}
-                    </div>
-                    <span
-                      className={cn(
-                        "flex-shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider",
-                        tw ? tw.solid : "bg-slate-400 text-white"
-                      )}
-                    >
-                      {cell.grade ? GRADE_SHORT[cell.grade] : "—"}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <ReportSection title="Job Details">
+            <InfoRow label="Client" value={job.clientName} />
+            <InfoRow label="Site" value={job.siteAddress} />
+            <InfoRow label="Technician" value={job.technicianName} />
+            <InfoRow label="Date" value={job.date} />
+          </ReportSection>
 
           {(job.issuesFound || job.partsReplaced || job.recommendations) && (
             <ReportSection title="Technician Notes">
-              {job.issuesFound && (
-                <InfoBlock label="Issues Found" value={job.issuesFound} />
-              )}
-              {job.partsReplaced && (
-                <InfoBlock label="Parts Replaced" value={job.partsReplaced} />
-              )}
+              {job.issuesFound && <InfoBlock label="Issues Found" value={job.issuesFound} />}
+              {job.partsReplaced && <InfoBlock label="Parts Replaced" value={job.partsReplaced} />}
               {job.recommendations && (
-                <InfoBlock
-                  label="Recommendations"
-                  value={job.recommendations}
-                />
+                <InfoBlock label="Recommendations" value={job.recommendations} />
               )}
             </ReportSection>
           )}
+        </CardContent>
+      </Card>
 
-          <div className="flex flex-col items-stretch gap-4 border-t pt-5 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <div className="mb-6 text-xs text-muted-foreground">
-                Technician Signature
-              </div>
-              <div className="mb-1.5 w-56 border-b-2 border-navy-soft" />
-              <div className="text-sm text-muted-foreground">
-                {job.technicianName || "Technician"}
-              </div>
+      <div className="mt-5 space-y-5">
+        {items.map((it, i) => (
+          <ItemCard key={it.id || i} item={it} index={i} />
+        ))}
+      </div>
+
+      <Card className="mt-5 print-shadow-none">
+        <CardContent className="flex flex-col items-stretch gap-4 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-7">
+          <div>
+            <div className="mb-6 text-xs text-muted-foreground">Technician Signature</div>
+            <div className="mb-1.5 w-56 border-b-2 border-navy-soft" />
+            <div className="text-sm text-muted-foreground">
+              {job.technicianName || "Technician"}
             </div>
-            <div className="text-left sm:text-right">
-              <div className="text-[11px] text-muted-foreground">
-                Report generated by
-              </div>
-              <div className="text-base font-extrabold text-navy">
-                Gymstallations
-              </div>
-              <div className="mt-0.5 text-[11px] text-muted-foreground">
-                {job.submittedAt || job.date}
-              </div>
+          </div>
+          <div className="text-left sm:text-right">
+            <div className="text-[11px] text-muted-foreground">Report generated by</div>
+            <div className="text-base font-extrabold text-navy">Gymstallations</div>
+            <div className="mt-0.5 text-[11px] text-muted-foreground">
+              {job.submittedAt || job.date}
             </div>
           </div>
         </CardContent>

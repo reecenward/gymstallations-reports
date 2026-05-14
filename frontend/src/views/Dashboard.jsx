@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import {
   AlertTriangle,
   ChevronRight,
+  ClipboardCheck,
   ClipboardList,
   FileEdit,
   Mail,
@@ -19,7 +20,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AccountMenu } from "@/components/AccountMenu";
 import { cn } from "@/lib/utils";
 
-const STEP_LABELS = ["Basics", "Inspection", "Notes"];
+const STEP_LABELS = ["Site", "Equipment", "Inspection", "Notes"];
 
 function DraftResumeCard({ draft, step, onResume, onDiscard }) {
   const label =
@@ -79,6 +80,7 @@ function BrandMark() {
 
 const FILTERS = [
   { id: "all", label: "All" },
+  { id: "review", label: "Awaiting Review", icon: ClipboardCheck, adminOnly: true },
   { id: "replace", label: "Needs Replacement", icon: AlertTriangle },
   { id: "failed", label: "Email Failed", icon: Mail },
 ];
@@ -142,11 +144,13 @@ export function Dashboard({
   const counts = useMemo(() => {
     let replace = 0;
     let failed = 0;
+    let review = 0;
     for (const j of jobs) {
       if ((j.needsReplacementCount || 0) > 0) replace++;
       if (j.emailStatus === "failed") failed++;
+      if ((j.reviewStatus || "pending") === "pending" && !j.isDemo) review++;
     }
-    return { replace, failed };
+    return { replace, failed, review };
   }, [jobs]);
 
   const filtered = useMemo(() => {
@@ -154,6 +158,7 @@ export function Dashboard({
     return jobs.filter((j) => {
       if (filter === "replace" && !(j.needsReplacementCount > 0)) return false;
       if (filter === "failed" && j.emailStatus !== "failed") return false;
+      if (filter === "review" && (j.reviewStatus || "pending") !== "pending") return false;
       if (tech !== "all" && j.createdByEmail !== tech) return false;
       if (!q) return true;
       const haystack = [
@@ -218,7 +223,7 @@ export function Dashboard({
             )}
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {FILTERS.map((f) => (
+            {FILTERS.filter((f) => !f.adminOnly || isAdmin).map((f) => (
               <FilterChip
                 key={f.id}
                 icon={f.icon}
@@ -229,6 +234,8 @@ export function Dashboard({
                     ? counts.replace
                     : f.id === "failed"
                     ? counts.failed
+                    : f.id === "review"
+                    ? counts.review
                     : jobs.length
                 }
               >
@@ -363,7 +370,7 @@ export function Dashboard({
                             by {job.createdBy}
                           </div>
                         )}
-                        {(replace > 0 || failed) && (
+                        {(replace > 0 || failed || (job.reviewStatus && job.reviewStatus !== "pending") || (isAdmin && !job.isDemo && (job.reviewStatus || "pending") === "pending")) && (
                           <div className="mt-2 flex flex-wrap gap-1.5">
                             {replace > 0 && (
                               <Badge variant="destructive">
@@ -376,6 +383,24 @@ export function Dashboard({
                               <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800">
                                 <Mail className="size-3" />
                                 Email failed
+                              </Badge>
+                            )}
+                            {job.reviewStatus === "sent_to_client" && (
+                              <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-800">
+                                <ClipboardCheck className="size-3" />
+                                Sent to client
+                              </Badge>
+                            )}
+                            {job.reviewStatus === "reviewed" && (
+                              <Badge variant="outline" className="border-sky-300 bg-sky-50 text-sky-800">
+                                <ClipboardCheck className="size-3" />
+                                Reviewed
+                              </Badge>
+                            )}
+                            {isAdmin && !job.isDemo && (job.reviewStatus || "pending") === "pending" && (
+                              <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800">
+                                <ClipboardCheck className="size-3" />
+                                Awaiting review
                               </Badge>
                             )}
                           </div>

@@ -6,7 +6,7 @@ import { FormView } from "@/views/FormView";
 import { ReportView } from "@/views/ReportView";
 import { LoginView } from "@/views/LoginView";
 import { AdminUsersView } from "@/views/AdminUsersView";
-import { makeDraft, makeInitialChecklist } from "@/lib/equipment";
+import { makeDraft, makeItem, normalizeDraft } from "@/lib/equipment";
 import { api, getToken, clearToken } from "@/lib/api";
 import {
   DEMO_REPORT_ID,
@@ -15,7 +15,7 @@ import {
   setDemoDismissed,
 } from "@/lib/demo";
 
-const DRAFT_KEY = "gym_draft_v2";
+const DRAFT_KEY = "gym_draft_v3";
 
 function loadSavedDraft() {
   try {
@@ -24,10 +24,28 @@ function loadSavedDraft() {
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") return null;
     if (!parsed.draft) return null;
-    return { draft: parsed.draft, step: Number.isFinite(parsed.step) ? parsed.step : 0 };
+    return {
+      draft: normalizeDraft(parsed.draft),
+      step: Number.isFinite(parsed.step) ? parsed.step : 0,
+    };
   } catch {
     return null;
   }
+}
+
+function stripPhotosFromItems(items) {
+  return (items || []).map((it) => ({
+    ...it,
+    distancePhoto: null,
+    serialPhoto: null,
+    issuePhotos: [],
+    checklist: Object.fromEntries(
+      Object.entries(it.checklist || {}).map(([k, v]) => [
+        k,
+        v && v.photo ? { ...v, photo: null } : v,
+      ])
+    ),
+  }));
 }
 
 function persistDraft(draft, step) {
@@ -35,11 +53,14 @@ function persistDraft(draft, step) {
   try {
     localStorage.setItem(DRAFT_KEY, JSON.stringify(blob));
   } catch {
-    // Most likely QuotaExceededError from a big base64 photo — retry without it.
+    // QuotaExceededError on big base64 photos — retry without them.
     try {
       localStorage.setItem(
         DRAFT_KEY,
-        JSON.stringify({ draft: { ...draft, serialPhoto: null }, step })
+        JSON.stringify({
+          draft: { ...draft, items: stripPhotosFromItems(draft.items) },
+          step,
+        })
       );
     } catch {
       /* give up silently */
@@ -57,10 +78,10 @@ function clearSavedDraft() {
 
 function isMeaningfulDraft(d) {
   if (!d) return false;
-  if (d.clientName || d.brand || d.model || d.equipmentType) return true;
+  if (d.clientName || d.siteAddress) return true;
   if (d.issuesFound || d.partsReplaced || d.recommendations) return true;
-  if (d.serialPhoto) return true;
-  return Object.values(d.checklist || {}).some((c) => c && c.grade);
+  if ((d.items || []).length > 0) return true;
+  return false;
 }
 
 function creatorLabel(emailOrName, name) {
@@ -68,7 +89,7 @@ function creatorLabel(emailOrName, name) {
 }
 
 function jobFromServer(detail) {
-  const p = detail.payload || {};
+  const p = normalizeDraft(detail.payload || {});
   return {
     ...p,
     id: detail.id,
@@ -77,6 +98,10 @@ function jobFromServer(detail) {
     createdBy: creatorLabel(detail.created_by_email, detail.created_by_name),
     createdByEmail: detail.created_by_email || null,
     needsReplacementCount: detail.needs_replacement_count || 0,
+    itemCount: detail.item_count || (p.items || []).length || 0,
+    reviewStatus: detail.review_status || "pending",
+    reviewedByEmail: detail.reviewed_by_email || null,
+    reviewedAt: detail.reviewed_at || null,
   };
 }
 
@@ -94,7 +119,11 @@ function summaryToJob(s) {
     createdBy: creatorLabel(s.created_by_email, s.created_by_name),
     createdByEmail: s.created_by_email || null,
     needsReplacementCount: s.needs_replacement_count || 0,
-    checklist: {},
+    itemCount: s.item_count || 0,
+    reviewStatus: s.review_status || "pending",
+    reviewedByEmail: s.reviewed_by_email || null,
+    reviewedAt: s.reviewed_at || null,
+    items: [],
   };
 }
 
@@ -107,6 +136,7 @@ export default function App() {
   const [draft, setDraft] = useState(makeDraft);
   const [emailState, setEmailState] = useState("idle");
   const [viewingJob, setViewingJob] = useState(null);
+  const [editingId, setEditingId] = useState(null);
   const [savedDraft, setSavedDraft] = useState(() => {
     const s = loadSavedDraft();
     return s && isMeaningfulDraft(s.draft) ? s : null;
@@ -150,54 +180,38 @@ export default function App() {
     };
   }, [user]);
 
-  // Autosave the draft (and step) while the user is editing the form so a
-  // crash or accidental refresh doesn't wipe their work.
+  // Only persist draft for fresh reports, not admin edits of existing ones.
   useEffect(() => {
-    if (view !== "form") return;
+    if (view !== "form" || editingId) return;
     persistDraft(draft, step);
     if (isMeaningfulDraft(draft)) {
       setSavedDraft({ draft, step });
     }
-  }, [draft, step, view]);
+  }, [draft, step, view, editingId]);
 
   const upd = (field, val) => setDraft((d) => ({ ...d, [field]: val }));
 
-  const updEquipmentType = (type) =>
+  const addItem = (type) =>
+    setDraft((d) => ({ ...d, items: [...(d.items || []), makeItem(type)] }));
+
+  const updateItem = (id, patch) =>
     setDraft((d) => ({
       ...d,
-      equipmentType: type,
-      checklist: makeInitialChecklist(type),
+      items: (d.items || []).map((it) => (it.id === id ? { ...it, ...patch } : it)),
     }));
 
-  const updChecklistGrade = (item, grade) =>
+  const removeItem = (id) =>
     setDraft((d) => ({
       ...d,
-      checklist: {
-        ...d.checklist,
-        [item]: {
-          ...(d.checklist[item] || { grade: null, notes: "" }),
-          grade: d.checklist[item]?.grade === grade ? null : grade,
-        },
-      },
-    }));
-
-  const updChecklistNotes = (item, notes) =>
-    setDraft((d) => ({
-      ...d,
-      checklist: {
-        ...d.checklist,
-        [item]: {
-          ...(d.checklist[item] || { grade: null, notes: "" }),
-          notes,
-        },
-      },
+      items: (d.items || []).filter((it) => it.id !== id),
     }));
 
   const enterForm = (initialDraft, initialStep = 0, resumed = false) => {
-    setDraft(initialDraft);
+    setDraft(normalizeDraft(initialDraft));
     setStep(initialStep);
     setEmailState("idle");
     setViewingJob(null);
+    setEditingId(null);
     setView("form");
     if (resumed) toast.message("Resumed your in-progress draft");
   };
@@ -236,14 +250,17 @@ export default function App() {
     toast.message("Draft discarded");
   };
 
+  const enterEdit = (job) => {
+    setDraft(normalizeDraft(job));
+    setEditingId(job.id);
+    setStep(0);
+    setView("form");
+  };
+
   const submitReport = async () => {
     setEmailState("sending");
-    const payload = { ...draft };
-    if (payload.serialPhoto && typeof payload.serialPhoto !== "string") {
-      payload.serialPhoto = null;
-    }
     try {
-      const res = await api.submitReport(payload);
+      const res = await api.submitReport(draft);
       const job = {
         ...draft,
         id: res.id,
@@ -269,6 +286,21 @@ export default function App() {
     }
   };
 
+  const saveEdit = async () => {
+    if (!editingId) return;
+    try {
+      const detail = await api.updateReport(editingId, { payload: draft });
+      const full = jobFromServer(detail);
+      setJobs((prev) => prev.map((j) => (j.id === full.id ? { ...j, ...full } : j)));
+      setViewingJob(full);
+      setEditingId(null);
+      setView("report");
+      toast.success("Report updated");
+    } catch (err) {
+      toast.error(err.message || "Failed to update report");
+    }
+  };
+
   const openJob = async (job) => {
     if (job?.id === DEMO_REPORT_ID) {
       toast.message(
@@ -280,7 +312,6 @@ export default function App() {
       const detail = await api.getReport(job.id);
       const full = jobFromServer(detail);
       setViewingJob(full);
-      setDraft(full);
       setEmailState(
         detail.email_status === "sent"
           ? "sent"
@@ -291,6 +322,24 @@ export default function App() {
       setView("report");
     } catch (err) {
       toast.error(err.message || "Failed to load report");
+    }
+  };
+
+  const updateReview = async (status) => {
+    if (!viewingJob?.id) return;
+    try {
+      const detail = await api.updateReport(viewingJob.id, { review_status: status });
+      const full = jobFromServer(detail);
+      setViewingJob(full);
+      setJobs((prev) => prev.map((j) => (j.id === full.id ? { ...j, ...full } : j)));
+      const labels = {
+        reviewed: "Marked as reviewed",
+        sent_to_client: "Marked as sent to client",
+        pending: "Reset to pending",
+      };
+      toast.success(labels[status] || "Status updated");
+    } catch (err) {
+      toast.error(err.message || "Failed to update status");
     }
   };
 
@@ -359,12 +408,20 @@ export default function App() {
           setStep={setStep}
           draft={draft}
           upd={upd}
-          updEquipmentType={updEquipmentType}
-          updChecklistGrade={updChecklistGrade}
-          updChecklistNotes={updChecklistNotes}
-          onSubmit={submitReport}
-          onBack={() => setView("dashboard")}
-          onDiscard={discardDraft}
+          addItem={addItem}
+          updateItem={updateItem}
+          removeItem={removeItem}
+          onSubmit={editingId ? saveEdit : submitReport}
+          onBack={() => {
+            if (editingId) {
+              setEditingId(null);
+              setView("report");
+            } else {
+              setView("dashboard");
+            }
+          }}
+          onDiscard={editingId ? null : discardDraft}
+          editing={!!editingId}
         />
       )}
       {view === "report" && (
@@ -374,6 +431,11 @@ export default function App() {
           onSend={sendReport}
           onBack={() => setView("dashboard")}
           onPrint={() => window.print()}
+          isAdmin={!!user.is_admin}
+          onEdit={user.is_admin && viewingJob ? () => enterEdit(viewingJob) : null}
+          onMarkReviewed={user.is_admin ? () => updateReview("reviewed") : null}
+          onMarkSent={user.is_admin ? () => updateReview("sent_to_client") : null}
+          onResetReview={user.is_admin ? () => updateReview("pending") : null}
         />
       )}
       <Toaster />

@@ -46,18 +46,7 @@ class ReportSubmission(BaseModel):
     date: Optional[str] = None
     jobNumber: str
     technicianName: str = ""
-    equipmentType: str = ""
-    brand: str = ""
-    model: str = ""
-    serialNumber: str = ""
-    assetId: str = ""
-    location: str = ""
-    manufacturingDate: str = ""
-    installDate: str = ""
-    hoursOnUnit: str = ""
-    ageYears: str = ""
-    serialPhoto: Optional[str] = None
-    checklist: dict[str, ChecklistItem] = {}
+    items: list[dict[str, Any]] = []
     issuesFound: str = ""
     partsReplaced: str = ""
     recommendations: str = ""
@@ -74,9 +63,13 @@ class ReportSummary(BaseModel):
     email_status: str
     brand: Optional[str] = None
     model: Optional[str] = None
+    item_count: int = 0
     needs_replacement_count: int = 0
     created_by_email: Optional[str] = None
     created_by_name: Optional[str] = None
+    review_status: str = "pending"
+    reviewed_by_email: Optional[str] = None
+    reviewed_at: Optional[str] = None
 
 
 class ReportDetail(ReportSummary):
@@ -89,3 +82,8 @@ class SubmitReportResponse(BaseModel):
     submitted_at: str
     email_status: str
     email_error: Optional[str] = None
+
+
+class ReportUpdate(BaseModel):
+    payload: Optional[dict[str, Any]] = None
+    review_status: Optional[str] = None  # 'pending' | 'reviewed' | 'sent_to_client'

@@ -36,6 +36,7 @@ export const api = {
   submitReport: (payload) => request("/reports", { method: "POST", body: payload }),
   listReports: () => request("/reports"),
   getReport: (id) => request(`/reports/${id}`),
+  updateReport: (id, body) => request(`/reports/${id}`, { method: "PATCH", body }),
   listUsers: () => request("/auth/users"),
   createUser: (payload) => request("/auth/users", { method: "POST", body: payload }),
   updateUser: (id, payload) => request(`/auth/users/${id}`, { method: "PATCH", body: payload }),

@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 export function ConditionChart({ checklist }) {
   const counts = gradeCounts(checklist);
   const total =
-    counts.Excellent +
     counts.Good +
     counts["Acceptable - Has Wear"] +
     counts["Needs Replacement"] +
@@ -19,7 +18,6 @@ export function ConditionChart({ checklist }) {
   }
 
   const max = Math.max(
-    counts.Excellent,
     counts.Good,
     counts["Acceptable - Has Wear"],
     counts["Needs Replacement"],

@@ -3,14 +3,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { HealthSummary } from "@/components/HealthSummary";
 
 export function StepFinish({ draft, upd }) {
+  const items = draft.items || [];
   return (
     <div className="space-y-6">
-      <HealthSummary draft={draft} />
+      {items.length > 0 && (
+        <div className="space-y-4">
+          <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Per-item summary
+          </div>
+          {items.map((it, idx) => (
+            <HealthSummary
+              key={it.id}
+              item={it}
+              title={`#${idx + 1} · ${it.equipmentType}`}
+            />
+          ))}
+        </div>
+      )}
 
       <div>
         <div className="mb-1 text-sm font-semibold text-neutral-900">Notes</div>
         <p className="mb-4 text-xs text-neutral-500">
-          Anything not covered by the checklist.
+          Anything not covered by the checklist (applies to the whole report).
         </p>
         <div className="space-y-4">
           <Field label="Issues found" htmlFor="issuesFound">

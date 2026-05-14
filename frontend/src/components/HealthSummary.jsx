@@ -1,19 +1,15 @@
 import { GRADES, GRADE_COLORS, GRADE_SHORT, gradeCounts } from "@/lib/equipment";
 
-// Weighted health score: Excellent=100, Good=75, Acceptable=40, Replace=0.
+// Weighted health score across the 3 grades.
 const WEIGHTS = {
-  Excellent: 100,
-  Good: 75,
-  "Acceptable - Has Wear": 40,
+  Good: 100,
+  "Acceptable - Has Wear": 50,
   "Needs Replacement": 0,
 };
 
 function computeScore(counts) {
   const graded =
-    counts.Excellent +
-    counts.Good +
-    counts["Acceptable - Has Wear"] +
-    counts["Needs Replacement"];
+    counts.Good + counts["Acceptable - Has Wear"] + counts["Needs Replacement"];
   if (graded === 0) return null;
   const sum = GRADES.reduce((acc, g) => acc + WEIGHTS[g] * counts[g], 0);
   return Math.round(sum / graded);
@@ -21,15 +17,14 @@ function computeScore(counts) {
 
 function scoreVerdict(score) {
   if (score === null) return "Not graded";
-  if (score >= 85) return "Excellent";
-  if (score >= 65) return "Good";
-  if (score >= 40) return "Needs Attention";
+  if (score >= 85) return "Good";
+  if (score >= 50) return "Needs Attention";
   return "Critical";
 }
 
 function Donut({ counts, total, score }) {
-  const SIZE = 168;
-  const STROKE = 18;
+  const SIZE = 140;
+  const STROKE = 16;
   const R = (SIZE - STROKE) / 2;
   const C = 2 * Math.PI * R;
   let offset = 0;
@@ -61,22 +56,15 @@ function Donut({ counts, total, score }) {
   return (
     <div className="relative grid place-items-center" style={{ width: SIZE, height: SIZE }}>
       <svg width={SIZE} height={SIZE} className="absolute inset-0">
-        <circle
-          cx={SIZE / 2}
-          cy={SIZE / 2}
-          r={R}
-          fill="none"
-          stroke="#f5f5f5"
-          strokeWidth={STROKE}
-        />
+        <circle cx={SIZE / 2} cy={SIZE / 2} r={R} fill="none" stroke="#f5f5f5" strokeWidth={STROKE} />
         {segments}
       </svg>
       <div className="relative text-center">
-        <div className="text-4xl font-extrabold tracking-tight text-neutral-900 tabular-nums">
+        <div className="text-3xl font-extrabold tracking-tight text-neutral-900 tabular-nums">
           {score ?? "—"}
         </div>
         <div className="-mt-0.5 text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-          Health score
+          Health
         </div>
       </div>
     </div>
@@ -94,15 +82,10 @@ function Bars({ counts, total }) {
           <div key={g}>
             <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-neutral-700">
               <span className="flex items-center gap-2">
-                <span
-                  className="inline-block size-2 rounded-full"
-                  style={{ background: color }}
-                />
+                <span className="inline-block size-2 rounded-full" style={{ background: color }} />
                 {GRADE_SHORT[g]}
               </span>
-              <span className="tabular-nums text-neutral-500">
-                {n} · {pct}%
-              </span>
+              <span className="tabular-nums text-neutral-500">{n} · {pct}%</span>
             </div>
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-100">
               <div
@@ -117,13 +100,10 @@ function Bars({ counts, total }) {
   );
 }
 
-export function HealthSummary({ draft, title = "Inspection Summary" }) {
-  const counts = gradeCounts(draft.checklist || {});
-  const graded =
-    counts.Excellent +
-    counts.Good +
-    counts["Acceptable - Has Wear"] +
-    counts["Needs Replacement"];
+// Renders a health summary for a single equipment item (its checklist).
+export function HealthSummary({ item, title }) {
+  const counts = gradeCounts(item?.checklist || {});
+  const graded = counts.Good + counts["Acceptable - Has Wear"] + counts["Needs Replacement"];
   const total = graded + (counts.ungraded || 0);
   const score = computeScore(counts);
   const verdict = scoreVerdict(score);
@@ -134,22 +114,17 @@ export function HealthSummary({ draft, title = "Inspection Summary" }) {
       <div className="mb-4 flex items-center justify-between">
         <div>
           <div className="text-xs font-bold uppercase tracking-wider text-neutral-500">
-            {title}
+            {title || "Inspection Summary"}
           </div>
           <div className="mt-1 text-base font-bold text-neutral-900">
-            {draft.clientName || "Untitled"}
+            {item?.equipmentType || "Equipment"}
           </div>
           <div className="text-sm text-neutral-500">
-            {draft.equipmentType
-              ? `${draft.equipmentType}${draft.brand ? ` · ${draft.brand}` : ""}${
-                  draft.model ? ` ${draft.model}` : ""
-                }`
-              : "—"}
+            {[item?.brand, item?.model].filter(Boolean).join(" ") || "—"}
+            {item?.serialNumber ? ` · SN ${item.serialNumber}` : ""}
           </div>
         </div>
-        <div
-          className="rounded-full border border-neutral-200 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-700"
-        >
+        <div className="rounded-full border border-neutral-200 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-700">
           {verdict}
         </div>
       </div>
@@ -159,7 +134,7 @@ export function HealthSummary({ draft, title = "Inspection Summary" }) {
           {graded > 0 ? (
             <Donut counts={counts} total={graded} score={score} />
           ) : (
-            <div className="grid size-[168px] place-items-center rounded-full border border-dashed border-neutral-200 text-xs text-neutral-400">
+            <div className="grid size-[140px] place-items-center rounded-full border border-dashed border-neutral-200 text-xs text-neutral-400">
               No grades yet
             </div>
           )}
@@ -167,9 +142,7 @@ export function HealthSummary({ draft, title = "Inspection Summary" }) {
         <div>
           <Bars counts={counts} total={graded || 1} />
           <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-neutral-500">
-            <span className="tabular-nums">
-              {graded}/{total} graded
-            </span>
+            <span className="tabular-nums">{graded}/{total} graded</span>
             {counts.ungraded > 0 && (
               <span className="rounded-full bg-neutral-100 px-2 py-0.5 font-semibold text-neutral-700">
                 {counts.ungraded} ungraded

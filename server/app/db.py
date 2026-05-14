@@ -24,7 +24,10 @@ CREATE TABLE IF NOT EXISTS reports (
   payload_json TEXT NOT NULL,
   email_status TEXT NOT NULL DEFAULT 'pending',
   email_error TEXT,
-  submitted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  submitted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  review_status TEXT NOT NULL DEFAULT 'pending',
+  reviewed_by INTEGER,
+  reviewed_at TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_reports_user ON reports(user_id);
@@ -42,6 +45,15 @@ def init_db() -> None:
         cols = {r["name"] for r in conn.execute("PRAGMA table_info(users)")}
         if "is_admin" not in cols:
             conn.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
+        rcols = {r["name"] for r in conn.execute("PRAGMA table_info(reports)")}
+        if "review_status" not in rcols:
+            conn.execute(
+                "ALTER TABLE reports ADD COLUMN review_status TEXT NOT NULL DEFAULT 'pending'"
+            )
+        if "reviewed_by" not in rcols:
+            conn.execute("ALTER TABLE reports ADD COLUMN reviewed_by INTEGER")
+        if "reviewed_at" not in rcols:
+            conn.execute("ALTER TABLE reports ADD COLUMN reviewed_at TEXT")
         conn.commit()
 
 
