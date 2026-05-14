@@ -106,18 +106,54 @@ function Bars({ counts, total }) {
   );
 }
 
+function PhotoTile({ src, kind, label, sublabel }) {
+  return (
+    <figure className="flex flex-col overflow-hidden rounded-md border bg-neutral-50">
+      <img src={src} alt={label} className="block h-28 w-full object-cover" />
+      <figcaption className="flex flex-col gap-0.5 px-2 py-1.5">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+          {kind}
+        </span>
+        <span className="text-[11px] font-semibold leading-snug text-neutral-800">
+          {label}
+        </span>
+        {sublabel && (
+          <span className="text-[11px] italic leading-snug text-neutral-500">
+            “{sublabel}”
+          </span>
+        )}
+      </figcaption>
+    </figure>
+  );
+}
+
 function PhotoStrip({ item }) {
   const issueCells = Object.entries(item?.checklist || {}).filter(
     ([, c]) => c && c.grade === REPLACEMENT_GRADE && c.photo
   );
-  const tiles = [
-    item?.distancePhoto && { src: item.distancePhoto, label: "Equipment" },
-    item?.serialPhoto && { src: item.serialPhoto, label: "Serial #" },
-    ...issueCells.map(([label, cell]) => ({
+  const tiles = [];
+  if (item?.distancePhoto) {
+    tiles.push({
+      src: item.distancePhoto,
+      kind: "Equipment",
+      label: [item.brand, item.model].filter(Boolean).join(" ") || item.equipmentType || "Unit",
+    });
+  }
+  if (item?.serialPhoto) {
+    tiles.push({
+      src: item.serialPhoto,
+      kind: "Serial #",
+      label: item.serialNumber || "—",
+    });
+  }
+  for (const [label, cell] of issueCells) {
+    tiles.push({
       src: cell.photo,
-      label: `Issue · ${label}`,
-    })),
-  ].filter(Boolean);
+      kind: "Issue",
+      label,
+      sublabel: cell.notes || null,
+    });
+  }
 
   if (tiles.length === 0) return null;
   return (
@@ -127,15 +163,7 @@ function PhotoStrip({ item }) {
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {tiles.map((t, i) => (
-          <figure
-            key={i}
-            className="overflow-hidden rounded-md border bg-neutral-50"
-          >
-            <img src={t.src} alt={t.label} className="block h-24 w-full object-cover" />
-            <figcaption className="truncate px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-              {t.label}
-            </figcaption>
-          </figure>
+          <PhotoTile key={i} {...t} />
         ))}
       </div>
     </div>
@@ -167,6 +195,9 @@ export function HealthSummary({ item, title, showPhotos = true }) {
             {[item?.brand, item?.model].filter(Boolean).join(" ") || "—"}
             {item?.serialNumber ? ` · SN ${item.serialNumber}` : ""}
           </div>
+          {item?.location && (
+            <div className="mt-0.5 text-xs text-neutral-500">{item.location}</div>
+          )}
         </div>
         <div className="rounded-full border border-neutral-200 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-700">
           {verdict}
