@@ -88,7 +88,7 @@ export function FormView({
         {onDiscard && !editing && (
           <Button
             onClick={() => setConfirmDiscard(true)}
-            variant="ghost"
+            variant="destructive"
             size="sm"
           >
             <Trash2 className="size-4" />

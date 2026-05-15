@@ -211,7 +211,7 @@ export function AdminUsersView({ currentUser, onBack }) {
                     </Button>
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="destructive"
                       onClick={() => setDeleteTarget(u)}
                       disabled={u.id === currentUser.id}
                     >

@@ -50,7 +50,7 @@ function DraftResumeCard({ draft, step, onResume, onDiscard }) {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={onDiscard}>
+          <Button size="sm" variant="destructive" onClick={onDiscard}>
             <Trash2 className="size-4" />
             Throw away
           </Button>
@@ -92,7 +92,7 @@ function FilterChip({ active, onClick, children, icon: Icon, count }) {
       className={cn(
         "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors",
         active
-          ? "border-primary bg-primary text-primary-foreground"
+          ? "border-neutral-900 bg-neutral-900 text-white"
           : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50"
       )}
     >
@@ -102,7 +102,7 @@ function FilterChip({ active, onClick, children, icon: Icon, count }) {
         <span
           className={cn(
             "ml-0.5 rounded-full px-1.5 text-[10px] font-bold tabular-nums",
-            active ? "bg-white/20 text-white" : "bg-neutral-100 text-neutral-600"
+            active ? "bg-white/25 text-white" : "bg-neutral-100 text-neutral-600"
           )}
         >
           {count}

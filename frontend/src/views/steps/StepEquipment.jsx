@@ -141,7 +141,7 @@ export function StepEquipment({ draft, addItem, updateItem, removeItem }) {
                   </span>
                 </div>
                 <Button
-                  variant="ghost"
+                  variant="destructive"
                   size="sm"
                   onClick={() => removeItem(it.id)}
                 >
