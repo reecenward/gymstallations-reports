@@ -308,6 +308,21 @@ export default function App() {
     }
   };
 
+  const deleteReport = async (job) => {
+    if (!job?.id || job.isDemo || job.id === DEMO_REPORT_ID) return;
+    try {
+      await api.deleteReport(job.id);
+      setJobs((prev) => prev.filter((j) => j.id !== job.id));
+      if (viewingJob?.id === job.id) {
+        setViewingJob(null);
+        setView("dashboard");
+      }
+      toast.success("Report deleted.");
+    } catch {
+      toast.error("Couldn't delete the report. Try again.");
+    }
+  };
+
   const submitReport = async () => {
     setEmailState("sending");
     try {
@@ -451,6 +466,7 @@ export default function App() {
           onDismissDemo={dismissDemo}
           onEditJob={user.is_admin ? editFromList : null}
           onUpdateReview={user.is_admin ? (job, status) => updateReview(status, job.id) : null}
+          onDeleteJob={user.is_admin ? deleteReport : null}
         />
       )}
       {view === "users" && (
@@ -487,6 +503,7 @@ export default function App() {
           onPrint={() => window.print()}
           isAdmin={!!user.is_admin}
           onEdit={user.is_admin && viewingJob ? () => enterEdit(viewingJob) : null}
+          onDelete={user.is_admin && viewingJob ? () => deleteReport(viewingJob) : null}
           onMarkReviewed={user.is_admin ? () => updateReview("reviewed") : null}
           onMarkSent={user.is_admin ? () => updateReview("sent_to_client") : null}
           onResetReview={user.is_admin ? () => updateReview("pending") : null}

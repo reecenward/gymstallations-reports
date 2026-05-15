@@ -37,6 +37,7 @@ export const api = {
   listReports: () => request("/reports"),
   getReport: (id) => request(`/reports/${id}`),
   updateReport: (id, body) => request(`/reports/${id}`, { method: "PATCH", body }),
+  deleteReport: (id) => request(`/reports/${id}`, { method: "DELETE" }),
   listUsers: () => request("/auth/users"),
   createUser: (payload) => request("/auth/users", { method: "POST", body: payload }),
   updateUser: (id, payload) => request(`/auth/users/${id}`, { method: "PATCH", body: payload }),
