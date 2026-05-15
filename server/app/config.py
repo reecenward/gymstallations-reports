@@ -10,9 +10,13 @@ class Settings(BaseSettings):
 
     cors_origins: str = "http://localhost:5173"
 
-    # Webhook that receives submitted report payloads. The destination service
-    # is responsible for any downstream notification (email, Slack, etc.).
+    # Webhook that receives a simple notification when a report is submitted.
+    # The destination service handles downstream delivery (email, Slack, etc.).
     form_handler_url: str = ""
+
+    # Public base URL of the app, used to build a "view report" link in the
+    # notification payload (e.g. https://reports.example.com).
+    app_base_url: str = ""
 
     @property
     def cors_origin_list(self) -> list[str]:

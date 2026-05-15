@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from ..db import connect
-from ..form_handler import forward_report
+from ..form_handler import notify_new_report
 from ..models import (
     ReportDetail,
     ReportSubmission,
@@ -104,7 +104,13 @@ def submit_report(body: ReportSubmission, current=Depends(get_current_user)):
             "SELECT submitted_at FROM reports WHERE id = ?", (report_id,)
         ).fetchone()
 
-    ok, err = forward_report(payload, technician_email=current["email"])
+    ok, err = notify_new_report(
+        report_id=report_id,
+        created_by=current["email"],
+        submitted_at=row["submitted_at"],
+        job_number=body.jobNumber,
+        client_name=body.clientName or None,
+    )
     new_status = "sent" if ok else "failed"
 
     with connect() as conn:

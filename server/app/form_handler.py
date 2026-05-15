@@ -6,17 +6,38 @@ from typing import Optional, Tuple
 from .config import settings
 
 
-def forward_report(payload: dict, technician_email: Optional[str] = None) -> Tuple[bool, Optional[str]]:
-    """POST the report payload to the configured form-handler webhook.
+def notify_new_report(
+    report_id: int,
+    created_by: Optional[str],
+    submitted_at: str,
+    job_number: Optional[str] = None,
+    client_name: Optional[str] = None,
+) -> Tuple[bool, Optional[str]]:
+    """POST a simple "new report" notification to the configured webhook.
 
-    Returns (ok, error_message). Errors do not raise — callers persist the
+    Payload is intentionally tiny — just who/when and a link back to view
+    the full report in the app. Errors do not raise; callers persist the
     submission regardless so nothing is lost if the webhook is down.
     """
     url = settings.form_handler_url
     if not url:
         return False, "FORM_HANDLER_URL not configured"
 
-    body = json.dumps({"technician_email": technician_email, "report": payload}).encode("utf-8")
+    base = settings.app_base_url.rstrip("/")
+    link = f"{base}/?report={report_id}" if base else None
+
+    body = json.dumps(
+        {
+            "event": "report.created",
+            "report_id": report_id,
+            "created_by": created_by,
+            "created_at": submitted_at,
+            "job_number": job_number,
+            "client_name": client_name,
+            "link": link,
+        }
+    ).encode("utf-8")
+
     req = urllib.request.Request(
         url,
         data=body,
