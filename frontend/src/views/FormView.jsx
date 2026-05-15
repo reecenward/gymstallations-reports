@@ -77,7 +77,7 @@ export function FormView({
       <div className="mb-4 flex items-center gap-3 no-print">
         <Button onClick={onBack} variant="outline" size="sm">
           <ArrowLeft className="size-4" />
-          Back
+          {editing ? "Back to report" : "Save & exit"}
         </Button>
         <div className="min-w-0 flex-1">
           <div className="truncate text-base font-bold text-navy">{title}</div>
@@ -156,7 +156,7 @@ export function FormView({
               className="flex-1"
             >
               <ArrowLeft className="size-4" />
-              Back
+              Previous step
             </Button>
             {isLast ? (
               <Button onClick={onSubmit} size="xl" className="flex-[2] text-base">

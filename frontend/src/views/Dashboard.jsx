@@ -184,19 +184,21 @@ export function Dashboard({
   return (
     <div className="mx-auto w-full max-w-4xl px-4 pb-12 sm:px-6">
       <div className="sticky top-0 z-20 -mx-4 border-b border-transparent bg-background/95 px-4 pb-4 pt-4 backdrop-blur sm:-mx-6 sm:px-6 sm:pt-6">
-        <div className="mb-5 flex items-center justify-between gap-3">
+        <div className="mb-4 flex items-center justify-between gap-3">
           <BrandMark />
-          <AccountMenu
-            user={user}
-            onManageUsers={onManageUsers}
-            onLogout={onLogout}
-          />
+          <div className="flex items-center gap-2">
+            <Button onClick={onNew} size="lg">
+              <Plus className="size-4" />
+              <span className="hidden sm:inline">Start New Report</span>
+              <span className="sm:hidden">New Report</span>
+            </Button>
+            <AccountMenu
+              user={user}
+              onManageUsers={onManageUsers}
+              onLogout={onLogout}
+            />
+          </div>
         </div>
-
-        <Button onClick={onNew} size="xl" className="mb-4 w-full text-base">
-          <Plus className="size-5" />
-          Start New Report
-        </Button>
 
         <div className="space-y-2">
           {jobs.length >= 10 && (
