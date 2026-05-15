@@ -123,7 +123,6 @@ function ItemCard({ item, index }) {
             value={`${item.brand || ""} ${item.model || ""}`.trim() || "—"}
           />
           <InfoRow label="Serial #" value={item.serialNumber} />
-          <InfoRow label="Location" value={item.location} />
         </ReportSection>
 
         {(item.distancePhoto || item.serialPhoto) && (
