@@ -108,8 +108,7 @@ def submit_report(body: ReportSubmission, current=Depends(get_current_user)):
         report_id=report_id,
         created_by=current["email"],
         submitted_at=row["submitted_at"],
-        job_number=body.jobNumber,
-        client_name=body.clientName or None,
+        payload=stored,
     )
     new_status = "sent" if ok else "failed"
 
