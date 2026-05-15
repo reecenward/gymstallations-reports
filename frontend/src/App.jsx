@@ -180,6 +180,46 @@ export default function App() {
     };
   }, [user]);
 
+  // If the page was opened with ?report=<id> (e.g. a "view report" link from
+  // the new-report notification), auto-open that report after auth resolves.
+  useEffect(() => {
+    if (!user) return;
+    const params = new URLSearchParams(window.location.search);
+    const raw = params.get("report");
+    const id = raw ? parseInt(raw, 10) : null;
+    if (!id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const detail = await api.getReport(id);
+        if (cancelled) return;
+        const full = jobFromServer(detail);
+        setViewingJob(full);
+        setEmailState(
+          detail.email_status === "sent"
+            ? "sent"
+            : detail.email_status === "failed"
+            ? "failed"
+            : "idle"
+        );
+        setView("report");
+      } catch {
+        toast.error("Couldn't open that report.");
+      } finally {
+        params.delete("report");
+        const qs = params.toString();
+        window.history.replaceState(
+          {},
+          "",
+          window.location.pathname + (qs ? `?${qs}` : "")
+        );
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
   // Only persist draft for fresh reports, not admin edits of existing ones.
   useEffect(() => {
     if (view !== "form" || editingId) return;
