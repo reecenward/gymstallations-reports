@@ -95,10 +95,10 @@ export function FormView({
           <Button
             onClick={() => setConfirmDiscard(true)}
             variant="destructive"
-            size="sm"
+            size="icon"
+            aria-label="Throw away this report"
           >
             <Trash2 className="size-4" />
-            Throw away
           </Button>
         )}
       </div>

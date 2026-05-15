@@ -55,9 +55,13 @@ function DraftResumeCard({ draft, step, onResume, onDiscard }) {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="destructive" onClick={onDiscard}>
+          <Button
+            size="icon"
+            variant="destructive"
+            onClick={onDiscard}
+            aria-label="Throw away saved report"
+          >
             <Trash2 className="size-4" />
-            Throw away
           </Button>
           <Button size="lg" onClick={onResume}>
             Keep going
