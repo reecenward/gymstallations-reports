@@ -4,11 +4,15 @@ import {
   ChevronRight,
   ClipboardCheck,
   ClipboardList,
+  Eye,
   FileEdit,
   Mail,
+  Pencil,
   Plus,
   Search,
+  Send,
   Trash2,
+  Undo2,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { EquipmentIcon } from "@/components/EquipmentIcon";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AccountMenu } from "@/components/AccountMenu";
+import { CardActionsMenu } from "@/components/CardActionsMenu";
 import { cn } from "@/lib/utils";
 
 const STEP_LABELS = ["Site", "Equipment", "Inspection", "Notes"];
@@ -124,6 +129,8 @@ export function Dashboard({
   onResumeDraft,
   onDiscardDraft,
   onDismissDemo,
+  onEditJob,
+  onUpdateReview,
 }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
@@ -403,7 +410,7 @@ export function Dashboard({
                           </div>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 self-start sm:self-center">
+                      <div className="flex items-center gap-1 self-start sm:self-center">
                         {isDemo && onDismissDemo && (
                           <Button
                             variant="ghost"
@@ -416,6 +423,75 @@ export function Dashboard({
                             <X className="size-4" />
                             Dismiss
                           </Button>
+                        )}
+                        {!isDemo && (
+                          <CardActionsMenu>
+                            {({ close, MenuItem }) => {
+                              const status = job.reviewStatus || "pending";
+                              return (
+                                <>
+                                  <MenuItem
+                                    icon={Eye}
+                                    onClick={() => {
+                                      close();
+                                      onView(job);
+                                    }}
+                                  >
+                                    Open report
+                                  </MenuItem>
+                                  {isAdmin && onEditJob && (
+                                    <MenuItem
+                                      icon={Pencil}
+                                      onClick={() => {
+                                        close();
+                                        onEditJob(job);
+                                      }}
+                                    >
+                                      Edit report
+                                    </MenuItem>
+                                  )}
+                                  {isAdmin && onUpdateReview && (
+                                    <>
+                                      <div className="my-1 h-px bg-neutral-100" />
+                                      {status === "pending" && (
+                                        <MenuItem
+                                          icon={ClipboardCheck}
+                                          onClick={() => {
+                                            close();
+                                            onUpdateReview(job, "reviewed");
+                                          }}
+                                        >
+                                          Mark as reviewed
+                                        </MenuItem>
+                                      )}
+                                      {status !== "sent_to_client" && (
+                                        <MenuItem
+                                          icon={Send}
+                                          onClick={() => {
+                                            close();
+                                            onUpdateReview(job, "sent_to_client");
+                                          }}
+                                        >
+                                          Mark as sent to client
+                                        </MenuItem>
+                                      )}
+                                      {status !== "pending" && (
+                                        <MenuItem
+                                          icon={Undo2}
+                                          onClick={() => {
+                                            close();
+                                            onUpdateReview(job, "pending");
+                                          }}
+                                        >
+                                          Back to needs review
+                                        </MenuItem>
+                                      )}
+                                    </>
+                                  )}
+                                </>
+                              );
+                            }}
+                          </CardActionsMenu>
                         )}
                         <ChevronRight className="size-5 text-neutral-400" aria-hidden="true" />
                       </div>

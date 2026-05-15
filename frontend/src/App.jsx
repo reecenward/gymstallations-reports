@@ -257,6 +257,17 @@ export default function App() {
     setView("form");
   };
 
+  const editFromList = async (job) => {
+    if (job?.id === DEMO_REPORT_ID) return;
+    try {
+      const detail = await api.getReport(job.id);
+      const full = jobFromServer(detail);
+      enterEdit(full);
+    } catch {
+      toast.error("Couldn't open that report.");
+    }
+  };
+
   const submitReport = async () => {
     setEmailState("sending");
     try {
@@ -325,12 +336,13 @@ export default function App() {
     }
   };
 
-  const updateReview = async (status) => {
-    if (!viewingJob?.id) return;
+  const updateReview = async (status, jobId) => {
+    const targetId = jobId || viewingJob?.id;
+    if (!targetId) return;
     try {
-      const detail = await api.updateReport(viewingJob.id, { review_status: status });
+      const detail = await api.updateReport(targetId, { review_status: status });
       const full = jobFromServer(detail);
-      setViewingJob(full);
+      if (viewingJob?.id === targetId) setViewingJob(full);
       setJobs((prev) => prev.map((j) => (j.id === full.id ? { ...j, ...full } : j)));
       const labels = {
         reviewed: "Marked as reviewed.",
@@ -397,6 +409,8 @@ export default function App() {
           onResumeDraft={resumeDraft}
           onDiscardDraft={discardDraft}
           onDismissDemo={dismissDemo}
+          onEditJob={user.is_admin ? editFromList : null}
+          onUpdateReview={user.is_admin ? (job, status) => updateReview(status, job.id) : null}
         />
       )}
       {view === "users" && (
