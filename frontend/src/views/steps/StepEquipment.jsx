@@ -76,9 +76,13 @@ export function StepEquipment({ draft, addItem, updateItem, removeItem }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-1 text-lg font-bold text-navy">What's on site?</h2>
+        <h2 className="mb-1 text-lg font-bold text-navy">
+          {items.length === 0 ? "What's on site?" : "Add another machine"}
+        </h2>
         <p className="mb-3 text-sm text-muted-foreground">
-          Tap a type to add one. You can add as many as you need.
+          {items.length === 0
+            ? "Tap a button below to add your first machine."
+            : "Tap any button below to add another. You can add as many as you need."}
         </p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           {Object.keys(EQUIPMENT_TYPES).map((type) => {
@@ -89,16 +93,19 @@ export function StepEquipment({ draft, addItem, updateItem, removeItem }) {
                 type="button"
                 onClick={() => addItem(type)}
                 className={cn(
-                  "relative flex h-20 flex-col items-center justify-center rounded-xl border-2 p-2 text-center transition-colors",
+                  "relative flex h-24 flex-col items-center justify-center rounded-xl border-2 p-2 text-center transition-colors",
                   "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   n > 0
-                    ? "border-primary bg-brand-50"
-                    : "border-slate-200 bg-white hover:border-primary/40"
+                    ? "border-primary bg-primary/5 hover:bg-primary/10"
+                    : "border-slate-200 bg-white hover:border-primary/40 hover:bg-primary/5"
                 )}
               >
                 <EquipmentIcon type={type} className="size-6" />
                 <div className="mt-1.5 text-xs font-semibold leading-tight text-navy">
                   {type}
+                </div>
+                <div className="mt-0.5 text-[10px] font-semibold text-primary">
+                  {n > 0 ? "+ Add another" : "+ Tap to add"}
                 </div>
                 {n > 0 && (
                   <span className="absolute right-1.5 top-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
@@ -134,7 +141,7 @@ export function StepEquipment({ draft, addItem, updateItem, removeItem }) {
                   </span>
                 </div>
                 <Button
-                  variant="ghost"
+                  variant="destructive"
                   size="sm"
                   onClick={() => removeItem(it.id)}
                 >

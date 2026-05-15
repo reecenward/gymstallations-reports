@@ -50,7 +50,7 @@ function DraftResumeCard({ draft, step, onResume, onDiscard }) {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={onDiscard}>
+          <Button size="sm" variant="destructive" onClick={onDiscard}>
             <Trash2 className="size-4" />
             Throw away
           </Button>
@@ -92,7 +92,7 @@ function FilterChip({ active, onClick, children, icon: Icon, count }) {
       className={cn(
         "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors",
         active
-          ? "border-primary bg-primary text-primary-foreground"
+          ? "border-neutral-900 bg-neutral-900 text-white"
           : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50"
       )}
     >
@@ -102,7 +102,7 @@ function FilterChip({ active, onClick, children, icon: Icon, count }) {
         <span
           className={cn(
             "ml-0.5 rounded-full px-1.5 text-[10px] font-bold tabular-nums",
-            active ? "bg-white/20 text-white" : "bg-neutral-100 text-neutral-600"
+            active ? "bg-white/25 text-white" : "bg-neutral-100 text-neutral-600"
           )}
         >
           {count}
@@ -184,19 +184,21 @@ export function Dashboard({
   return (
     <div className="mx-auto w-full max-w-4xl px-4 pb-12 sm:px-6">
       <div className="sticky top-0 z-20 -mx-4 border-b border-transparent bg-background/95 px-4 pb-4 pt-4 backdrop-blur sm:-mx-6 sm:px-6 sm:pt-6">
-        <div className="mb-5 flex items-center justify-between gap-3">
+        <div className="mb-4 flex items-center justify-between gap-3">
           <BrandMark />
-          <AccountMenu
-            user={user}
-            onManageUsers={onManageUsers}
-            onLogout={onLogout}
-          />
+          <div className="flex items-center gap-2">
+            <Button onClick={onNew} size="lg">
+              <Plus className="size-4" />
+              <span className="hidden sm:inline">Start New Report</span>
+              <span className="sm:hidden">New Report</span>
+            </Button>
+            <AccountMenu
+              user={user}
+              onManageUsers={onManageUsers}
+              onLogout={onLogout}
+            />
+          </div>
         </div>
-
-        <Button onClick={onNew} size="xl" className="mb-4 w-full text-base">
-          <Plus className="size-5" />
-          Start New Report
-        </Button>
 
         <div className="space-y-2">
           {jobs.length >= 10 && (
