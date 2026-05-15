@@ -374,24 +374,24 @@ export function Dashboard({
                   );
                 } else if (isAdmin && !isDemo && status === "pending") {
                   badge = (
-                    <Badge variant="outline" className="border-warn bg-warn/10 text-warn-foreground">
-                      <ClipboardCheck className="size-3" />
+                    <span className="inline-flex items-center gap-1.5 rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-800">
+                      <span className="size-1.5 rounded-full bg-amber-500" />
                       Needs review
-                    </Badge>
+                    </span>
                   );
                 } else if (status === "sent_to_client") {
                   badge = (
-                    <Badge variant="outline" className="border-neutral-300 bg-neutral-50 text-neutral-700">
-                      <ClipboardCheck className="size-3" />
+                    <span className="inline-flex items-center gap-1.5 rounded-sm bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+                      <span className="size-1.5 rounded-full bg-emerald-500" />
                       Sent to client
-                    </Badge>
+                    </span>
                   );
                 } else if (status === "reviewed") {
                   badge = (
-                    <Badge variant="outline" className="border-neutral-300 bg-neutral-50 text-neutral-700">
-                      <ClipboardCheck className="size-3" />
+                    <span className="inline-flex items-center gap-1.5 rounded-sm bg-neutral-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-neutral-700">
+                      <span className="size-1.5 rounded-full bg-neutral-400" />
                       Reviewed
-                    </Badge>
+                    </span>
                   );
                 }
                 return (
