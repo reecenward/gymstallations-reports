@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -66,6 +66,12 @@ export function FormView({
   editing = false,
 }) {
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [triedAdvance, setTriedAdvance] = useState(false);
+
+  // Reset the "tried" flag whenever we move between steps — fresh start.
+  useEffect(() => {
+    setTriedAdvance(false);
+  }, [step]);
 
   const missing = missingForStep(step, draft);
   const canNext = missing.length === 0;
@@ -99,22 +105,13 @@ export function FormView({
 
       <div className="mb-5 flex gap-1.5 no-print">
         {STEPS.map((s, i) => (
-          <div key={s.short} className="flex-1">
-            <div
-              className={cn(
-                "h-2 rounded-full transition-colors",
-                i <= step ? "bg-primary" : "bg-slate-200"
-              )}
-            />
-            <div
-              className={cn(
-                "mt-1 text-center text-[11px] font-semibold",
-                i === step ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              {s.short}
-            </div>
-          </div>
+          <div
+            key={s.short}
+            className={cn(
+              "h-2 flex-1 rounded-full transition-colors",
+              i <= step ? "bg-primary" : "bg-slate-200"
+            )}
+          />
         ))}
       </div>
 
@@ -136,7 +133,7 @@ export function FormView({
 
       <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 backdrop-blur no-print pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto max-w-2xl px-4 py-3 sm:px-6">
-          {!canNext && !isLast && missing.length > 0 && (
+          {triedAdvance && !canNext && !isLast && missing.length > 0 && (
             <div className="mb-2 rounded-md border border-warn bg-warn/10 px-3 py-2 text-xs font-semibold text-warn-foreground">
               <div className="mb-0.5 font-bold">Please fill in:</div>
               <ul className="list-disc pl-4 leading-tight">
@@ -165,10 +162,16 @@ export function FormView({
               </Button>
             ) : (
               <Button
-                onClick={() => setStep((s) => s + 1)}
-                disabled={!canNext}
+                onClick={() => {
+                  if (!canNext) {
+                    setTriedAdvance(true);
+                    return;
+                  }
+                  setStep((s) => s + 1);
+                }}
+                aria-disabled={!canNext}
                 size="xl"
-                className="flex-[2] text-base"
+                className={cn("flex-[2] text-base", !canNext && "opacity-60")}
               >
                 Next
                 <ArrowRight className="size-5" />

@@ -180,15 +180,6 @@ export function StepEquipment({ draft, addItem, updateItem, removeItem }) {
                     placeholder="From the sticker on the machine"
                   />
                 </Field>
-                <Field label="Where on the floor?" htmlFor={`loc-${it.id}`}>
-                  <Input
-                    id={`loc-${it.id}`}
-                    className="h-11 text-base"
-                    value={it.location}
-                    onChange={(e) => updateItem(it.id, { location: e.target.value })}
-                    placeholder="Cardio Floor 2"
-                  />
-                </Field>
               </div>
 
               <div className="mt-3 grid gap-3 sm:grid-cols-2">

@@ -179,6 +179,9 @@ export function Dashboard({
         j.createdByEmail,
         j.siteAddress,
         j.serialNumber,
+        j.date,
+        j.submittedAt,
+        j.reviewStatus,
       ]
         .filter(Boolean)
         .join(" ")
@@ -190,16 +193,30 @@ export function Dashboard({
   const isAdmin = !!user?.is_admin;
   const hasFilters = query || filter !== "all" || tech !== "all";
 
+  // Only surface filter chips that have matches AND something else to show.
+  // If everything is "All", the chip row collapses entirely.
+  const visibleFilters = FILTERS.filter((f) => {
+    if (f.adminOnly && !isAdmin) return false;
+    if (f.id === "all") return false;
+    if (f.id === "replace") return counts.replace > 0;
+    if (f.id === "review") return counts.review > 0;
+    return false;
+  });
+  // Always include "All" as a sibling when at least one other chip is showing,
+  // so users can clear back to it without a separate reset button.
+  if (visibleFilters.length > 0) visibleFilters.unshift(FILTERS[0]);
+
+  const showTechFilter = isAdmin && techOptions.length > 1 && (hasFilters || tech !== "all");
+
   return (
     <div className="mx-auto w-full max-w-4xl px-4 pb-12 sm:px-6">
       <div className="sticky top-0 z-20 -mx-4 border-b border-transparent bg-background/95 px-4 pb-4 pt-4 backdrop-blur sm:-mx-6 sm:px-6 sm:pt-6">
         <div className="mb-4 flex items-center justify-between gap-3">
           <BrandMark />
           <div className="flex items-center gap-2">
-            <Button onClick={onNew} size="lg">
+            <Button onClick={onNew} size="lg" className="hidden sm:inline-flex">
               <Plus className="size-4" />
-              <span className="hidden sm:inline">Start New Report</span>
-              <span className="sm:hidden">New Report</span>
+              Start New Report
             </Button>
             <AccountMenu
               user={user}
@@ -209,62 +226,66 @@ export function Dashboard({
           </div>
         </div>
 
-        <div className="space-y-2">
-          {jobs.length >= 10 && (
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-neutral-400" />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search client, job #, brand, serial…"
-                className="h-11 pl-9 text-base"
-              />
-              {query && (
-                <button
-                  type="button"
-                  onClick={() => setQuery("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-neutral-400 hover:text-neutral-700"
-                  aria-label="Clear search"
-                >
-                  <X className="size-4" />
-                </button>
-              )}
-            </div>
-          )}
-          <div className="flex flex-wrap gap-1.5">
-            {FILTERS.filter((f) => !f.adminOnly || isAdmin).map((f) => (
-              <FilterChip
-                key={f.id}
-                icon={f.icon}
-                active={filter === f.id}
-                onClick={() => setFilter(f.id)}
-                count={
-                  f.id === "replace"
-                    ? counts.replace
-                    : f.id === "review"
-                    ? counts.review
-                    : jobs.length
-                }
-              >
-                {f.label}
-              </FilterChip>
-            ))}
-            {isAdmin && techOptions.length > 1 && (
-              <select
-                value={tech}
-                onChange={(e) => setTech(e.target.value)}
-                className="h-8 rounded-full border border-neutral-200 bg-white px-3 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <option value="all">All technicians</option>
-                {techOptions.map((t) => (
-                  <option key={t.email} value={t.email}>
-                    {t.label}
-                  </option>
+        {(jobs.length > 0 || visibleFilters.length > 0 || showTechFilter) && (
+          <div className="space-y-2">
+            {jobs.length > 0 && (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-neutral-400" />
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search client, job #, brand, model, serial, tech, address…"
+                  className="h-11 pl-9 text-base"
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-neutral-400 hover:text-neutral-700"
+                    aria-label="Clear search"
+                  >
+                    <X className="size-4" />
+                  </button>
+                )}
+              </div>
+            )}
+            {(visibleFilters.length > 0 || showTechFilter) && (
+              <div className="flex flex-wrap gap-1.5">
+                {visibleFilters.map((f) => (
+                  <FilterChip
+                    key={f.id}
+                    icon={f.icon}
+                    active={filter === f.id}
+                    onClick={() => setFilter(f.id)}
+                    count={
+                      f.id === "replace"
+                        ? counts.replace
+                        : f.id === "review"
+                        ? counts.review
+                        : jobs.length
+                    }
+                  >
+                    {f.label}
+                  </FilterChip>
                 ))}
-              </select>
+                {showTechFilter && (
+                  <select
+                    value={tech}
+                    onChange={(e) => setTech(e.target.value)}
+                    className="h-8 rounded-full border border-neutral-200 bg-white px-3 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="all">All technicians</option>
+                    {techOptions.map((t) => (
+                      <option key={t.email} value={t.email}>
+                        {t.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
             )}
           </div>
-        </div>
+        )}
       </div>
 
       <div className="mt-6 space-y-4">
@@ -334,6 +355,45 @@ export function Dashboard({
                 const replace = job.needsReplacementCount || 0;
                 const failed = job.emailStatus === "failed";
                 const isDemo = !!job.isDemo;
+                const status = job.reviewStatus || "pending";
+                // One badge max, in order of urgency.
+                let badge = null;
+                if (replace > 0) {
+                  badge = (
+                    <Badge variant="destructive">
+                      <AlertTriangle className="size-3" />
+                      {replace} need{replace !== 1 ? "" : "s"} repair
+                    </Badge>
+                  );
+                } else if (failed) {
+                  badge = (
+                    <Badge variant="outline" className="border-warn bg-warn/10 text-warn-foreground">
+                      <Mail className="size-3" />
+                      Email didn't send
+                    </Badge>
+                  );
+                } else if (isAdmin && !isDemo && status === "pending") {
+                  badge = (
+                    <Badge variant="outline" className="border-warn bg-warn/10 text-warn-foreground">
+                      <ClipboardCheck className="size-3" />
+                      Needs review
+                    </Badge>
+                  );
+                } else if (status === "sent_to_client") {
+                  badge = (
+                    <Badge variant="outline" className="border-neutral-300 bg-neutral-50 text-neutral-700">
+                      <ClipboardCheck className="size-3" />
+                      Sent to client
+                    </Badge>
+                  );
+                } else if (status === "reviewed") {
+                  badge = (
+                    <Badge variant="outline" className="border-neutral-300 bg-neutral-50 text-neutral-700">
+                      <ClipboardCheck className="size-3" />
+                      Reviewed
+                    </Badge>
+                  );
+                }
                 return (
                   <Card
                     key={job.id}
@@ -371,45 +431,13 @@ export function Dashboard({
                               .join(" · ")}
                           </span>
                         </div>
-                        {job.createdBy && (
+                        {isAdmin && job.createdBy && (
                           <div className="mt-0.5 truncate text-xs text-muted-foreground">
                             by {job.createdBy}
                           </div>
                         )}
-                        {(replace > 0 || failed || (job.reviewStatus && job.reviewStatus !== "pending") || (isAdmin && !job.isDemo && (job.reviewStatus || "pending") === "pending")) && (
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            {replace > 0 && (
-                              <Badge variant="destructive">
-                                <AlertTriangle className="size-3" />
-                                {replace} need
-                                {replace !== 1 ? "" : "s"} repair
-                              </Badge>
-                            )}
-                            {failed && (
-                              <Badge variant="outline" className="border-warn bg-warn/10 text-warn-foreground">
-                                <Mail className="size-3" />
-                                Email didn't send
-                              </Badge>
-                            )}
-                            {job.reviewStatus === "sent_to_client" && (
-                              <Badge variant="outline" className="border-neutral-300 bg-neutral-50 text-neutral-700">
-                                <ClipboardCheck className="size-3" />
-                                Sent to client
-                              </Badge>
-                            )}
-                            {job.reviewStatus === "reviewed" && (
-                              <Badge variant="outline" className="border-neutral-300 bg-neutral-50 text-neutral-700">
-                                <ClipboardCheck className="size-3" />
-                                Reviewed
-                              </Badge>
-                            )}
-                            {isAdmin && !job.isDemo && (job.reviewStatus || "pending") === "pending" && (
-                              <Badge variant="outline" className="border-warn bg-warn/10 text-warn-foreground">
-                                <ClipboardCheck className="size-3" />
-                                Needs review
-                              </Badge>
-                            )}
-                          </div>
+                        {badge && (
+                          <div className="mt-2 flex flex-wrap gap-1.5">{badge}</div>
                         )}
                       </div>
                       <div className="flex items-center gap-1 self-start sm:self-center">
@@ -510,7 +538,6 @@ export function Dashboard({
                             }}
                           </CardActionsMenu>
                         )}
-                        <ChevronRight className="size-5 text-neutral-400" aria-hidden="true" />
                       </div>
                     </CardContent>
                   </Card>
@@ -520,6 +547,15 @@ export function Dashboard({
           </div>
         )}
       </div>
+
+      <button
+        type="button"
+        onClick={onNew}
+        aria-label="Start new report"
+        className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-105 active:scale-95 sm:hidden"
+      >
+        <Plus className="size-6" strokeWidth={2.25} />
+      </button>
 
       <ConfirmDialog
         open={confirmDiscard}

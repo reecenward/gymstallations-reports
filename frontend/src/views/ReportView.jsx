@@ -1,10 +1,9 @@
 import { useState } from "react";
 import {
   ArrowLeft,
+  ChevronDown,
   Printer,
   Send,
-  Check,
-  Loader2,
   Pencil,
   ClipboardCheck,
   Mail,
@@ -14,6 +13,7 @@ import {
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { CardActionsMenu } from "@/components/CardActionsMenu";
 import { HealthSummary } from "@/components/HealthSummary";
 import { EquipmentIcon } from "@/components/EquipmentIcon";
 import {
@@ -92,6 +92,7 @@ function ItemCard({ item, index }) {
   const issues = checklistKeys
     .map((key) => ({ key, cell: item.checklist?.[key] }))
     .filter(({ cell }) => cell && cell.grade === REPLACEMENT_GRADE);
+  const [showChecklist, setShowChecklist] = useState(issues.length > 0);
 
   return (
     <Card className="overflow-hidden">
@@ -186,8 +187,27 @@ function ItemCard({ item, index }) {
         )}
 
         <div>
-          <SectionLabel>Inspection Results</SectionLabel>
-          <div className="space-y-1.5">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              Inspection Results
+            </div>
+            {issues.length === 0 && checklistKeys.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowChecklist((v) => !v)}
+                className="no-print inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-neutral-600 hover:bg-neutral-100"
+              >
+                {showChecklist ? "Hide" : "Show details"}
+                <ChevronDown className={cn("size-3.5 transition-transform", showChecklist && "rotate-180")} />
+              </button>
+            )}
+          </div>
+          {!showChecklist && issues.length === 0 && (
+            <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800">
+              All {checklistKeys.length} checks passed.
+            </div>
+          )}
+          <div className={cn("space-y-1.5", !showChecklist && "hidden print:!block")}>
             {checklistKeys.map((key) => {
               const cell = item.checklist?.[key] || { grade: null, notes: "" };
               const tw = cell.grade ? GRADE_TW[cell.grade] : null;
@@ -246,29 +266,88 @@ export function ReportView({
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-5 sm:px-6 sm:py-8">
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between no-print">
+      <div className="mb-5 flex items-center justify-between gap-3 no-print">
         <Button onClick={onBack} variant="outline">
           <ArrowLeft className="size-4" />
-          Back to reports
+          Back
         </Button>
-        <div className="flex flex-wrap gap-2">
-          {isAdmin && onEdit && (
-            <Button onClick={onEdit} variant="secondary">
-              <Pencil className="size-4" />
-              Edit
-            </Button>
+        <CardActionsMenu label="Report actions">
+          {({ close, MenuItem }) => (
+            <>
+              <MenuItem
+                icon={Printer}
+                onClick={() => {
+                  close();
+                  onPrint?.();
+                }}
+              >
+                Print
+              </MenuItem>
+              {isAdmin && onEdit && (
+                <MenuItem
+                  icon={Pencil}
+                  onClick={() => {
+                    close();
+                    onEdit();
+                  }}
+                >
+                  Edit report
+                </MenuItem>
+              )}
+              {isAdmin && (onMarkReviewed || onMarkSent || onResetReview) && (
+                <div className="my-1 h-px bg-neutral-100" />
+              )}
+              {isAdmin && reviewStatus === "pending" && onMarkReviewed && (
+                <MenuItem
+                  icon={ClipboardCheck}
+                  onClick={() => {
+                    close();
+                    onMarkReviewed();
+                  }}
+                >
+                  Mark as reviewed
+                </MenuItem>
+              )}
+              {isAdmin && reviewStatus !== "sent_to_client" && onMarkSent && (
+                <MenuItem
+                  icon={Mail}
+                  onClick={() => {
+                    close();
+                    onMarkSent();
+                  }}
+                >
+                  Mark as sent to client
+                </MenuItem>
+              )}
+              {isAdmin && reviewStatus !== "pending" && onResetReview && (
+                <MenuItem
+                  icon={Undo2}
+                  onClick={() => {
+                    close();
+                    onResetReview();
+                  }}
+                >
+                  Back to needs review
+                </MenuItem>
+              )}
+              {isAdmin && onDelete && (
+                <>
+                  <div className="my-1 h-px bg-neutral-100" />
+                  <MenuItem
+                    icon={Trash2}
+                    destructive
+                    onClick={() => {
+                      close();
+                      setConfirmDel(true);
+                    }}
+                  >
+                    Delete report
+                  </MenuItem>
+                </>
+              )}
+            </>
           )}
-          <Button onClick={onPrint} variant="outline">
-            <Printer className="size-4" />
-            Print
-          </Button>
-          {isAdmin && onDelete && (
-            <Button onClick={() => setConfirmDel(true)} variant="destructive">
-              <Trash2 className="size-4" />
-              Delete
-            </Button>
-          )}
-        </div>
+        </CardActionsMenu>
       </div>
 
       <ConfirmDialog
@@ -284,18 +363,6 @@ export function ReportView({
         onCancel={() => setConfirmDel(false)}
       />
 
-      {emailState === "sent" && (
-        <div className="mb-4 flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-semibold text-primary no-print">
-          <Check className="size-4" />
-          Sent to the client by email.
-        </div>
-      )}
-      {emailState === "sending" && (
-        <div className="mb-4 flex items-center gap-2 rounded-md border bg-neutral-50 px-3 py-2 text-sm font-semibold text-neutral-700 no-print">
-          <Loader2 className="size-4 animate-spin" />
-          Sending email…
-        </div>
-      )}
       {emailState === "failed" && (
         <div className="mb-4 flex items-center justify-between gap-3 rounded-md border border-warn bg-warn/10 px-3 py-2 no-print">
           <div className="flex items-center gap-2 text-sm font-semibold text-warn-foreground">
@@ -306,37 +373,6 @@ export function ReportView({
             <Send className="size-4" />
             Try again
           </Button>
-        </div>
-      )}
-
-      {isAdmin && (
-        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border bg-white p-3 no-print">
-          <span className="text-sm font-semibold text-navy">
-            Status:
-          </span>
-          <span className={cn("rounded-full border px-2 py-0.5 text-xs font-bold", badge.cls)}>
-            {badge.label}
-          </span>
-          <div className="ml-auto flex flex-wrap gap-2">
-            {reviewStatus === "pending" && onMarkReviewed && (
-              <Button size="sm" variant="outline" onClick={onMarkReviewed}>
-                <ClipboardCheck className="size-4" />
-                Mark as reviewed
-              </Button>
-            )}
-            {reviewStatus !== "sent_to_client" && onMarkSent && (
-              <Button size="sm" onClick={onMarkSent}>
-                <Mail className="size-4" />
-                Mark as sent
-              </Button>
-            )}
-            {reviewStatus !== "pending" && onResetReview && (
-              <Button size="sm" variant="ghost" onClick={onResetReview}>
-                <Undo2 className="size-4" />
-                Undo
-              </Button>
-            )}
-          </div>
         </div>
       )}
 
@@ -359,6 +395,13 @@ export function ReportView({
             <div className="mt-0.5 text-[10px] uppercase tracking-wider text-neutral-500">
               {items.length} item{items.length === 1 ? "" : "s"}
             </div>
+            {isAdmin && (
+              <div className="mt-2 no-print">
+                <span className={cn("inline-block rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider", badge.cls)}>
+                  {badge.label}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
