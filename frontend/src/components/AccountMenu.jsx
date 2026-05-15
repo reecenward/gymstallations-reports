@@ -67,7 +67,7 @@ export function AccountMenu({ user, onManageUsers, onLogout }) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-30 mt-2 w-64 origin-top-right rounded-xl border border-neutral-200 bg-white p-1.5 shadow-lg"
+          className="absolute right-0 z-30 mt-2 w-[min(16rem,calc(100vw-1.5rem))] origin-top-right rounded-xl border border-neutral-200 bg-white p-1.5 shadow-lg"
         >
           <div className="flex items-center gap-3 px-2.5 py-2">
             <div className="flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-neutral-900 text-sm font-bold text-white">
