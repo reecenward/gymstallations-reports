@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   ArrowLeft,
   Printer,
@@ -7,8 +8,10 @@ import {
   Pencil,
   ClipboardCheck,
   Mail,
+  Trash2,
   Undo2,
 } from "lucide-react";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { HealthSummary } from "@/components/HealthSummary";
@@ -233,7 +236,9 @@ export function ReportView({
   onMarkReviewed,
   onMarkSent,
   onResetReview,
+  onDelete,
 }) {
+  const [confirmDel, setConfirmDel] = useState(false);
   const normalized = normalizeDraft(job);
   const items = normalized.items || [];
   const reviewStatus = job.reviewStatus || "pending";
@@ -257,8 +262,27 @@ export function ReportView({
             <Printer className="size-4" />
             Print
           </Button>
+          {isAdmin && onDelete && (
+            <Button onClick={() => setConfirmDel(true)} variant="destructive">
+              <Trash2 className="size-4" />
+              Delete
+            </Button>
+          )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmDel}
+        title={`Delete report for ${job.clientName || "this job"}?`}
+        description="The report and its photos will be permanently deleted. You can't undo this."
+        confirmLabel="Delete report"
+        destructive
+        onConfirm={() => {
+          setConfirmDel(false);
+          onDelete?.();
+        }}
+        onCancel={() => setConfirmDel(false)}
+      />
 
       {emailState === "sent" && (
         <div className="mb-4 flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-semibold text-primary no-print">

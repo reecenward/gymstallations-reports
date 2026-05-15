@@ -131,11 +131,13 @@ export function Dashboard({
   onDismissDemo,
   onEditJob,
   onUpdateReview,
+  onDeleteJob,
 }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [tech, setTech] = useState("all");
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const techOptions = useMemo(() => {
     const seen = new Map();
@@ -488,6 +490,21 @@ export function Dashboard({
                                       )}
                                     </>
                                   )}
+                                  {isAdmin && onDeleteJob && (
+                                    <>
+                                      <div className="my-1 h-px bg-neutral-100" />
+                                      <MenuItem
+                                        icon={Trash2}
+                                        destructive
+                                        onClick={() => {
+                                          close();
+                                          setDeleteTarget(job);
+                                        }}
+                                      >
+                                        Delete report
+                                      </MenuItem>
+                                    </>
+                                  )}
                                 </>
                               );
                             }}
@@ -515,6 +532,24 @@ export function Dashboard({
           onDiscardDraft?.();
         }}
         onCancel={() => setConfirmDiscard(false)}
+      />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title={
+          deleteTarget
+            ? `Delete report for ${deleteTarget.clientName || "this job"}?`
+            : "Delete this report?"
+        }
+        description="The report and its photos will be permanently deleted. You can't undo this."
+        confirmLabel="Delete report"
+        destructive
+        onConfirm={() => {
+          const t = deleteTarget;
+          setDeleteTarget(null);
+          if (t) onDeleteJob?.(t);
+        }}
+        onCancel={() => setDeleteTarget(null)}
       />
     </div>
   );

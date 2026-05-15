@@ -225,6 +225,25 @@ def get_report(report_id: int, current=Depends(get_current_user)):
     return _row_to_detail(row)
 
 
+@router.delete("/{report_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_report(report_id: int, current=Depends(get_current_user)):
+    if not current.get("is_admin"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin only")
+    with connect() as conn:
+        cur = conn.execute("DELETE FROM reports WHERE id = ?", (report_id,))
+        conn.commit()
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Report not found")
+    # Best-effort cleanup of uploaded photos for this report.
+    import shutil
+    from ..storage import UPLOADS_DIR
+    try:
+        shutil.rmtree(UPLOADS_DIR / str(report_id), ignore_errors=True)
+    except Exception:
+        pass
+    return None
+
+
 @router.patch("/{report_id}", response_model=ReportDetail)
 def update_report(report_id: int, body: ReportUpdate, current=Depends(get_current_user)):
     if not current.get("is_admin"):
