@@ -25,10 +25,11 @@ import {
 } from "@/lib/equipment";
 import { cn } from "@/lib/utils";
 
+// Designed for the dark report header — high contrast against near-black bg.
 const REVIEW_BADGE = {
-  pending: { label: "Needs review", cls: "bg-warn/10 text-warn-foreground border-warn" },
-  reviewed: { label: "Reviewed", cls: "bg-neutral-100 text-neutral-700 border-neutral-200" },
-  sent_to_client: { label: "Sent to client", cls: "bg-neutral-100 text-neutral-700 border-neutral-200" },
+  pending: { label: "Needs review", dot: "bg-amber-400", cls: "bg-amber-400/15 text-amber-200 ring-1 ring-amber-400/40" },
+  reviewed: { label: "Reviewed", dot: "bg-neutral-300", cls: "bg-white/10 text-neutral-200 ring-1 ring-white/20" },
+  sent_to_client: { label: "Sent to client", dot: "bg-emerald-400", cls: "bg-emerald-400/15 text-emerald-200 ring-1 ring-emerald-400/40" },
 };
 
 function SectionLabel({ children }) {
@@ -397,7 +398,8 @@ export function ReportView({
             </div>
             {isAdmin && (
               <div className="mt-2 no-print">
-                <span className={cn("inline-block rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider", badge.cls)}>
+                <span className={cn("inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider", badge.cls)}>
+                  <span className={cn("size-1.5 rounded-full", badge.dot)} />
                   {badge.label}
                 </span>
               </div>
