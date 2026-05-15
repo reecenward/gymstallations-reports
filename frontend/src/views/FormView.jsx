@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -81,9 +81,13 @@ export function FormView({
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-4 pb-32 pt-4 sm:px-6 sm:pt-6">
       <div className="mb-4 flex items-center gap-3 no-print">
-        <Button onClick={onBack} variant="outline" size="sm">
-          <ArrowLeft className="size-4" />
-          {editing ? "Back to report" : "Save & exit"}
+        <Button
+          onClick={onBack}
+          variant="outline"
+          size="icon"
+          aria-label={editing ? "Back to report" : "Save and exit"}
+        >
+          <X className="size-4" />
         </Button>
         <div className="min-w-0 flex-1">
           <div className="truncate text-base font-bold text-navy">{title}</div>
