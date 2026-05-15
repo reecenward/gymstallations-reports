@@ -265,8 +265,8 @@ export function ReportView({
   const badge = REVIEW_BADGE[reviewStatus] || REVIEW_BADGE.pending;
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-5 sm:px-6 sm:py-8">
-      <div className="mb-5 flex items-center justify-between gap-3 no-print">
+    <div className="mx-auto w-full max-w-4xl px-4 pb-5 sm:px-6 sm:pb-8">
+      <div className="sticky top-0 z-20 -mx-4 mb-5 flex items-center justify-between gap-3 border-b border-transparent bg-background/95 px-4 py-3 backdrop-blur no-print sm:-mx-6 sm:px-6 sm:py-4">
         <Button onClick={onBack} variant="outline">
           <ArrowLeft className="size-4" />
           Back
